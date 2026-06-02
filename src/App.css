@@ -1,0 +1,55 @@
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; }
+body { font-family: Arial, Helvetica, sans-serif; background: #080808; color: #e8e8e8; }
+button, input { font: inherit; }
+.page { min-height: 100vh; padding: 14px; background: radial-gradient(circle at top, #25201a 0, #080808 44%); }
+.appShell { width: min(520px, 100%); margin: 0 auto; }
+.topLine { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 12px; }
+h1 { margin: 2px 0 0; font-size: 26px; }
+.brand { color: #ff9800; letter-spacing: 4px; font-size: 11px; font-weight: 800; }
+.card, .panel { background: #1e1e1e; border: 1px solid #333; border-radius: 22px; padding: 20px; margin: 12px auto; box-shadow: 0 14px 40px rgba(0,0,0,.36); }
+.setupPage { display: grid; place-items: center; }
+.setupPanel { width: min(460px, 100%); text-align: center; }
+.setupPanel p { color: #aaa; }
+.deviceInput { width: 100%; border: 1px solid #444; background: #111; color: white; border-radius: 14px; padding: 16px; text-align: center; text-transform: uppercase; letter-spacing: 2px; margin: 14px 0; }
+.primary, .smallBtn { border: 0; border-radius: 14px; background: #ff9800; color: #111; font-weight: 900; padding: 13px 18px; cursor: pointer; }
+.smallBtn { padding: 10px 12px; }
+.link { border-radius: 999px; padding: 10px 14px; text-align: center; font-weight: 800; font-size: 12px; letter-spacing: 1px; margin-bottom: 8px; }
+.link.good { background: rgba(0, 255, 153, .10); color: #60ffba; border: 1px solid rgba(0,255,153,.25); }
+.link.bad { background: rgba(255, 80, 80, .10); color: #ff8b8b; border: 1px solid rgba(255,80,80,.25); }
+.error { background: rgba(255, 70, 70, .15); border: 1px solid rgba(255,70,70,.35); color: #ffb0b0; padding: 10px 12px; border-radius: 14px; margin: 8px 0; }
+.divider { border-top: 1px solid #333; margin: 12px 0 18px; position: relative; }
+.divider span { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); background: #1e1e1e; color: #747474; padding: 0 14px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
+.power { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; margin: 20px auto 16px; border: 6px solid #888; background: radial-gradient(circle, #ddd, #909090); box-shadow: 0 7px 18px rgba(0,0,0,.55); cursor: pointer; }
+.power.on { border-color: #ff9800; box-shadow: 0 0 22px rgba(255,152,0,.85), 0 7px 18px rgba(0,0,0,.55); }
+.power span { width: 42px; height: 42px; border-radius: 50%; border: 5px solid #333; border-top-color: transparent; position: relative; }
+.power span:before { content: ""; position: absolute; width: 5px; height: 24px; background: #333; top: -12px; left: 14px; border-radius: 4px; }
+.label { color: #8d8d8d; letter-spacing: 1px; font-size: 12px; text-align: center; margin-top: 13px; }
+.mainTemp { color: #ff9800; font-size: 58px; line-height: 1; font-weight: 900; text-align: center; }
+.extTemp { color: #00bcd4; font-size: 38px; line-height: 1.1; font-weight: 900; text-align: center; }
+.mainTemp span, .extTemp span { font-size: .35em; vertical-align: super; }
+.summary { text-align: center; color: #ddd; margin: 16px 0 6px; }
+.sliderWrap { position: relative; padding: 6px 4px 40px; margin-top: 8px; }
+.slider { width: 100%; accent-color: #ff9800; }
+.slider.red { accent-color: #ff4444; }
+.ticks { position: absolute; left: 8px; right: 8px; top: 34px; display: flex; justify-content: space-between; pointer-events: none; }
+.tick { width: 2px; height: 16px; background: #666; position: relative; }
+.tick span { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #777; font-size: 12px; }
+.lightArea { display: flex; gap: 14px; align-items: stretch; }
+.modeGrid { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.mode, .ledToggle { color: white; border: 0; min-height: 48px; border-radius: 11px; font-weight: 900; font-size: 12px; cursor: pointer; background: #333; box-shadow: inset 0 0 0 2px transparent; }
+.mode.active, .ledToggle.active { box-shadow: inset 0 0 0 2px #ff9800, 0 0 12px rgba(255,152,0,.25); color: #ffcf89; }
+.ledToggle { grid-column: span 3; background: #444; font-size: 15px; }
+.orange { background: orange; color:#222; } .cyan { background: cyan; color:#123; } .warm { background:#ffcc66; color:#222; }
+.cool { background:#eef2ff; color:#222; } .gold { background:#ffd700; color:#222; } .lava { background:#cf1010; }
+.purple { background: purple; } .forest { background: green; } .sunset { background: orangered; }
+.ocean { background: dodgerblue; } .deep { background: darkblue; } .party { background: linear-gradient(45deg,#f06,#4a90e2); }
+.brightness { width: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: #252525; border: 1px solid #333; border-radius: 15px; padding: 12px 0; color: #aaa; font-size: 10px; font-weight: 800; }
+.brightness input { writing-mode: vertical-lr; direction: rtl; width: 28px; height: 230px; accent-color: #ff9800; }
+@media (max-width: 430px) {
+  .page { padding: 8px; }
+  .card { padding: 18px 14px; }
+  .mainTemp { font-size: 52px; }
+  .mode { font-size: 11px; min-height: 44px; }
+  .brightness { width: 55px; }
+}
