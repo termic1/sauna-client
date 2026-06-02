@@ -1,7 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-const API_BASE = "http://localhost:3001";
-const WS_BASE = "ws://localhost:3001/ws";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+function makeWsBase() {
+  const url = new URL(API_BASE);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.pathname = "/ws";
+  return url.toString();
+}
+
+const WS_BASE = makeWsBase();
 
 const MODES = [
   [1, "FIRE", "orange"], [2, "ZEN", "cyan"], [3, "WARM", "warm"],
