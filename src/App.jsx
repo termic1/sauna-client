@@ -282,12 +282,12 @@ export default function App() {
           </p>
 
           <Slider
-            min="90"
-            max="135"
+            min="120"
+            max="220"
             step="0.5"
             value={Number(status.t ?? 107.5)}
             onChange={(v) => cmd("target", Number(v), { t: Number(v) })}
-            ticks={["90", "112", "135"]}
+            ticks={["120", "170", "220"]}
           />
 
           <Slider
