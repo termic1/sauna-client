@@ -18,12 +18,6 @@ const MODES = [
   [11, "OCEAN", "ocean"], [6, "DEEP", "deep"], [12, "PARTY", "party"],
 ];
 
-const ROOMS = [
-  [1, "SAUNA"],
-  [2, "STEAM R"],
-  [3, "BOTH R"],
-];
-
 function cleanDeviceId(value) {
   return String(value || "").replace(/[^a-fA-F0-9]/g, "").toUpperCase();
 }
@@ -50,7 +44,6 @@ export default function App() {
     b: 150,
     mode: 1,
     lon: true,
-    rm: 3,
   });
   const [backendOnline, setBackendOnline] = useState(false);
   const [wsOnline, setWsOnline] = useState(false);
@@ -171,7 +164,6 @@ export default function App() {
       b: 150,
       mode: 1,
       lon: true,
-      rm: 3,
     });
   }
 
@@ -195,16 +187,6 @@ export default function App() {
     } catch (e) {
       setError(e.message || "Command failed");
     }
-  }
-
-  function selectedRoom() {
-    const rm = Number(status.rm ?? 3);
-    return rm >= 1 && rm <= 3 ? rm : 3;
-  }
-
-  function roomLabel() {
-    const rm = selectedRoom();
-    return ROOMS.find(([id]) => id === rm)?.[1] || "BOTH R";
   }
 
   if (!deviceId) {
@@ -330,22 +312,6 @@ export default function App() {
 
         <section className="card">
           <Divider label="Chromotherapy" />
-
-          <div className="roomSelector">
-            {ROOMS.map(([id, name]) => (
-              <button
-                key={id}
-                className={selectedRoom() === id ? "roomBtn active" : "roomBtn"}
-                onClick={() => cmd("room", id, { rm: id })}
-              >
-                {name}
-              </button>
-            ))}
-          </div>
-
-          <p className="summary">
-            Light changes apply to: <b>{roomLabel()}</b>
-          </p>
 
           <div className="lightArea">
             <div className="modeGrid">
