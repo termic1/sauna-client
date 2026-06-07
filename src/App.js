@@ -43,8 +43,13 @@ function timerDisplay(value) {
 }
 
 export default function App() {
-  const [deviceId, setDeviceId] = useState(localStorage.getItem("saunaDeviceId") || "");
-  const [entryId, setEntryId] = useState(deviceId);
+  const [deviceId, setDeviceId] = useState(
+    urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
+  );
+
+  const [entryId, setEntryId] = useState(
+    urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
+  );
   const [status, setStatus] = useState({
     t: 107.5,
     tm: 0,
@@ -58,12 +63,24 @@ export default function App() {
   const [wsOnline, setWsOnline] = useState(false);
   const [error, setError] = useState("");
   const wsRef = useRef(null);
-
+  const urlDeviceId = cleanDeviceId(
+    new URLSearchParams(window.location.search).get("device")
+  );
   const connectedText = useMemo(() => {
     if (!backendOnline) return "BACKEND OFFLINE";
     if (!wsOnline) return "WAITING FOR LIVE STATUS";
     return "REMOTE MQTT LINK ACTIVE";
   }, [backendOnline, wsOnline]);
+
+  useEffect(() => {
+    if (urlDeviceId && urlDeviceId.length === 12) {
+      localStorage.setItem("saunaDeviceId", urlDeviceId);
+      setDeviceId(urlDeviceId);
+      setEntryId(urlDeviceId);
+
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
