@@ -89,15 +89,8 @@ export default function App() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-  	setWsOnline(true);
-  	setError("");
-
-  	ws.send(
-    		JSON.stringify({
-      			type: "subscribe",
-      			deviceId
-    		})
-  	);
+        setWsOnline(true);
+        setError("");
       };
 
       ws.onmessage = (event) => {
@@ -182,7 +175,8 @@ export default function App() {
     });
   }
 
-  async function cmd(command, value) {
+  async function cmd(command, value, patch = {}) {
+    setStatus((prev) => ({ ...prev, ...patch }));
 
     try {
       const r = await fetch(`${API_BASE}/api/device/${deviceId}/cmd/${command}`, {
