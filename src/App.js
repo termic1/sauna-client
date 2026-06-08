@@ -40,13 +40,27 @@ function timerDisplay(value) {
   if (!Number.isFinite(n) || n <= 0) return 0;
   return Math.ceil(n);
 }
+function getDeviceIdFromText(text = "") {
+  const raw = String(text || "").trim();
 
+  try {
+    const url = new URL(raw);
+    return cleanDeviceId(url.searchParams.get("device"));
+  } catch {}
+
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = cleanDeviceId(params.get("device"));
+  if (fromUrl.length === 12) return fromUrl;
+
+  return cleanDeviceId(raw);
+}
 export default function App() {
-  const urlDeviceId = cleanDeviceId(
-    new URLSearchParams(window.location.search).get("device")
-  );
+  const urlDeviceId = getDeviceIdFromText(window.location.href);
+
   const initialDeviceId =
-    urlDeviceId || localStorage.getItem("saunaDeviceId") || "";
+  urlDeviceId.length === 12
+    ? urlDeviceId
+    : localStorage.getItem("saunaDeviceId") || "";
   const [showQr, setShowQr] = useState(false);
   const [deviceId, setDeviceId] = useState(initialDeviceId);
   const [entryId, setEntryId] = useState(initialDeviceId);
@@ -104,7 +118,7 @@ export default function App() {
 
   	scanner.render(
     		(decodedText) => {
-      			const cleaned = cleanDeviceId(decodedText);
+      			const cleaned = getDeviceIdFromText(decodedText);
 
      			 if (cleaned.length === 12) {
         			setEntryId(cleaned);
