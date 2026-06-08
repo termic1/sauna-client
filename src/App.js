@@ -55,17 +55,19 @@ function getDeviceIdFromText(text = "") {
   return cleanDeviceId(raw);
 }
 export default function App() {
-  const urlDeviceId = cleanDeviceId(
-    new URLSearchParams(window.location.search).get("device")
-  );
-  console.log("href:", window.location.href);
-  console.log("search:", window.location.search);
-  console.log("urlDeviceId:", urlDeviceId);
-  console.log("initialDeviceId:", initialDeviceId);
-  const initialDeviceId =
+const urlDeviceId = cleanDeviceId(
+  new URLSearchParams(window.location.search).get("device")
+);
+
+const initialDeviceId =
   urlDeviceId.length === 12
     ? urlDeviceId
     : localStorage.getItem("saunaDeviceId") || "";
+
+console.log("href:", window.location.href);
+console.log("search:", window.location.search);
+console.log("urlDeviceId:", urlDeviceId);
+console.log("initialDeviceId:", initialDeviceId);
   
   const [showQr, setShowQr] = useState(false);
   const [deviceId, setDeviceId] = useState(initialDeviceId);
