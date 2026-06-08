@@ -66,9 +66,18 @@ export default function App() {
   urlDeviceId.length === 12
     ? urlDeviceId
     : localStorage.getItem("saunaDeviceId") || "";
+  
   const [showQr, setShowQr] = useState(false);
   const [deviceId, setDeviceId] = useState(initialDeviceId);
+
   const [entryId, setEntryId] = useState(initialDeviceId);
+  const debugText = `
+    href: ${window.location.href}
+    search: ${window.location.search}
+    urlDeviceId: ${urlDeviceId}
+    initialDeviceId: ${initialDeviceId}
+    deviceId: ${deviceId}
+  `;
   const [status, setStatus] = useState({
     t: 107.5,
     tm: 0,
@@ -289,7 +298,9 @@ export default function App() {
           <div className="brand">GEYSERSTEAM</div>
           <h1>Sauna Remote</h1>
           <p>Enter your sauna Device ID to continue.</p>
-
+	  <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
+  		{debugText}
+	  </pre>
           <input
             className="deviceInput"
             value={entryId}
