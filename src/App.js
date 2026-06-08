@@ -297,7 +297,7 @@ console.log("initialDeviceId:", initialDeviceId);
     return (
       <div className="page setupPage">
         <div className="panel setupPanel">
-          <div className="brand">GEYSERSTEAM</div>
+          <div className="brand">GEYSERSTEAM2</div>
           <h1>Sauna Remote</h1>
           <p>Enter your sauna Device ID to continue.</p>
 	  <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", textAlign: "left" }}>
