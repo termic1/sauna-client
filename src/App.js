@@ -45,15 +45,11 @@ export default function App() {
   const urlDeviceId = cleanDeviceId(
     new URLSearchParams(window.location.search).get("device")
   );
-  const [deviceId, setDeviceId] = useState(
-    urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
-  );
-
-
-const [showQr, setShowQr] = useState(false);
-const [entryId, setEntryId] = useState(
-    urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
-  );
+  const initialDeviceId =
+    urlDeviceId || localStorage.getItem("saunaDeviceId") || "";
+  const [showQr, setShowQr] = useState(false);
+  const [deviceId, setDeviceId] = useState(initialDeviceId);
+  const [entryId, setEntryId] = useState(initialDeviceId);
   const [status, setStatus] = useState({
     t: 107.5,
     tm: 0,
