@@ -298,9 +298,9 @@ export default function App() {
           <div className="brand">GEYSERSTEAM</div>
           <h1>Sauna Remote</h1>
           <p>Enter your sauna Device ID to continue.</p>
-	  <pre style={{ fontSize: 12, whiteSpace: "pre-wrap" }}>
-  		{debugText}
-	  </pre>
+	  <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", textAlign: "left" }}>
+            {debugText}
+          </pre>
           <input
             className="deviceInput"
             value={entryId}
