@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
-
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
-const [showQr, setShowQr] = useState(false);
+
 
 function makeWsBase() {
   const url = new URL(API_BASE);
@@ -43,11 +42,16 @@ function timerDisplay(value) {
 }
 
 export default function App() {
+  const urlDeviceId = cleanDeviceId(
+    new URLSearchParams(window.location.search).get("device")
+  );
   const [deviceId, setDeviceId] = useState(
     urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
   );
 
-  const [entryId, setEntryId] = useState(
+
+const [showQr, setShowQr] = useState(false);
+const [entryId, setEntryId] = useState(
     urlDeviceId || localStorage.getItem("saunaDeviceId") || ""
   );
   const [status, setStatus] = useState({
@@ -63,14 +67,15 @@ export default function App() {
   const [wsOnline, setWsOnline] = useState(false);
   const [error, setError] = useState("");
   const wsRef = useRef(null);
-  const urlDeviceId = cleanDeviceId(
-    new URLSearchParams(window.location.search).get("device")
-  );
+  
+
   const connectedText = useMemo(() => {
     if (!backendOnline) return "BACKEND OFFLINE";
     if (!wsOnline) return "WAITING FOR LIVE STATUS";
     return "REMOTE MQTT LINK ACTIVE";
   }, [backendOnline, wsOnline]);
+
+
 
   useEffect(() => {
     if (urlDeviceId && urlDeviceId.length === 12) {
@@ -407,7 +412,7 @@ export default function App() {
               <button
                 key={id}
                 className={selectedRoom() === id ? "roomBtn active" : "roomBtn"}
-                onClick={() => cmd("room", id, { rm: id })}
+                onClick={() => cmd("room", id)}
               >
                 {name}
               </button>
@@ -426,7 +431,7 @@ export default function App() {
                   className={`mode ${cls} ${
                     Number(status.mode) === id && status.lon ? "active" : ""
                   }`}
-                  onClick={() => cmd("mode", id, { mode: id, lon: true })}
+                  onClick={() => cmd("mode", id)}
                 >
                   {name}
                 </button>
@@ -451,9 +456,7 @@ export default function App() {
                 max="255"
                 value={Number(status.b ?? 150)}
                 onChange={(e) =>
-                  cmd("bright", Number(e.target.value), {
-                    b: Number(e.target.value),
-                  })
+                  cmd("bright", Number(e.target.value))
                 }
               />
 
