@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import { Html5QrcodeScanner } from "html5-qrcode/esm";
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 
@@ -64,22 +64,13 @@ const initialDeviceId =
     ? urlDeviceId
     : localStorage.getItem("saunaDeviceId") || "";
 
-console.log("href:", window.location.href);
-console.log("search:", window.location.search);
-console.log("urlDeviceId:", urlDeviceId);
-console.log("initialDeviceId:", initialDeviceId);
+
   
   const [showQr, setShowQr] = useState(false);
   const [deviceId, setDeviceId] = useState(initialDeviceId);
 
   const [entryId, setEntryId] = useState(initialDeviceId);
-  const debugText = `
-    href: ${window.location.href}
-    search: ${window.location.search}
-    urlDeviceId: ${urlDeviceId}
-    initialDeviceId: ${initialDeviceId}
-    deviceId: ${deviceId}
-  `;
+
   const [status, setStatus] = useState({
     t: 107.5,
     tm: 0,
@@ -300,9 +291,7 @@ console.log("initialDeviceId:", initialDeviceId);
           <div className="brand">GEYSERSTEAM2</div>
           <h1>Sauna Remote</h1>
           <p>Enter your sauna Device ID to continue.</p>
-	  <pre style={{ fontSize: 12, whiteSpace: "pre-wrap", textAlign: "left" }}>
-            {debugText}
-          </pre>
+
           <input
             className="deviceInput"
             value={entryId}
