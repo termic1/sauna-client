@@ -55,8 +55,13 @@ function getDeviceIdFromText(text = "") {
   return cleanDeviceId(raw);
 }
 export default function App() {
-  const urlDeviceId = getDeviceIdFromText(window.location.href);
-
+  const urlDeviceId = cleanDeviceId(
+    new URLSearchParams(window.location.search).get("device")
+  );
+  console.log("href:", window.location.href);
+  console.log("search:", window.location.search);
+  console.log("urlDeviceId:", urlDeviceId);
+  console.log("initialDeviceId:", initialDeviceId);
   const initialDeviceId =
   urlDeviceId.length === 12
     ? urlDeviceId
@@ -88,14 +93,10 @@ export default function App() {
 
 
   useEffect(() => {
-    if (urlDeviceId && urlDeviceId.length === 12) {
-      localStorage.setItem("saunaDeviceId", urlDeviceId);
-      setDeviceId(urlDeviceId);
-      setEntryId(urlDeviceId);
-
-      window.history.replaceState({}, "", window.location.pathname);
+    if (deviceId && deviceId.length === 12) {
+      localStorage.setItem("saunaDeviceId", deviceId);
     }
-  }, []);
+  }, [deviceId]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/health`)
