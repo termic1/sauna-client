@@ -1,17 +1,34 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from "react";
+
+import {
+  Html5QrcodeScanner
+} from "html5-qrcode";
 
 const API_BASE =
-  import.meta.env.VITE_API_URL || "http://localhost:3001";
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:3001";
 
 function makeWsBase() {
-  const url = new URL(API_BASE);
-  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  const url =
+    new URL(API_BASE);
+
+  url.protocol =
+    url.protocol === "https:"
+      ? "wss:"
+      : "ws:";
+
   url.pathname = "/ws";
+
   return url.toString();
 }
 
-const WS_BASE = makeWsBase();
+const WS_BASE =
+  makeWsBase();
 
 const MODES = [
   [1, "FIRE", "orange"],
@@ -25,50 +42,79 @@ const MODES = [
   [8, "SUNSET", "sunset"],
   [11, "OCEAN", "ocean"],
   [6, "DEEP", "deep"],
-  [12, "PARTY", "party"],
+  [12, "PARTY", "party"]
 ];
 
 const ROOMS = [
   [1, "SAUNA"],
   [2, "STEAM R"],
-  [3, "BOTH R"],
+  [3, "BOTH R"]
 ];
 
 function cleanDeviceId(value) {
   return String(value || "")
-    .replace(/[^a-fA-F0-9]/g, "")
+    .replace(
+      /[^a-fA-F0-9]/g,
+      ""
+    )
     .toUpperCase();
 }
 
 function cToF(c) {
   const n = Number(c);
-  if (!Number.isFinite(n)) return "--";
-  return (n * 1.8 + 32).toFixed(1);
+
+  if (!Number.isFinite(n)) {
+    return "--";
+  }
+
+  return (
+    n * 1.8 + 32
+  ).toFixed(1);
 }
 
 function timerDisplay(value) {
   const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) return 0;
+
+  if (
+    !Number.isFinite(n) ||
+    n <= 0
+  ) {
+    return 0;
+  }
+
   return Math.ceil(n);
 }
 
-function getDeviceIdFromText(text = "") {
-  const raw = String(text || "").trim();
+function getDeviceIdFromText(
+  text = ""
+) {
+  const raw =
+    String(text || "").trim();
 
   try {
-    const url = new URL(raw);
-    return cleanDeviceId(url.searchParams.get("device"));
+    const url =
+      new URL(raw);
+
+    return cleanDeviceId(
+      url.searchParams.get(
+        "device"
+      )
+    );
   } catch {}
 
-  const params = new URLSearchParams(
-    window.location.search
-  );
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
 
-  const fromUrl = cleanDeviceId(
-    params.get("device")
-  );
+  const fromUrl =
+    cleanDeviceId(
+      params.get("device")
+    );
 
-  if (fromUrl.length === 12) {
+  if (
+    fromUrl.length === 12
+  ) {
     return fromUrl;
   }
 
@@ -86,11 +132,13 @@ function boolFromStatus(value) {
 }
 
 export default function App() {
-  const urlDeviceId = cleanDeviceId(
-    new URLSearchParams(
-      window.location.search
-    ).get("device")
-  );
+
+  const urlDeviceId =
+    cleanDeviceId(
+      new URLSearchParams(
+        window.location.search
+      ).get("device")
+    );
 
   const initialDeviceId =
     urlDeviceId.length === 12
@@ -99,16 +147,29 @@ export default function App() {
           "saunaDeviceId"
         ) || "";
 
-  const [showQr, setShowQr] =
-    useState(false);
+  const [
+    showQr,
+    setShowQr
+  ] = useState(false);
 
-  const [deviceId, setDeviceId] =
-    useState(initialDeviceId);
+  const [
+    deviceId,
+    setDeviceId
+  ] = useState(
+    initialDeviceId
+  );
 
-  const [entryId, setEntryId] =
-    useState(initialDeviceId);
+  const [
+    entryId,
+    setEntryId
+  ] = useState(
+    initialDeviceId
+  );
 
-  const [status, setStatus] = useState({
+  const [
+    status,
+    setStatus
+  ] = useState({
     t: 120,
     tm: 0,
     itm: 0,
@@ -126,47 +187,52 @@ export default function App() {
     amanual: false,
     aromaUI: false,
 
-    // LED installation settings
+    // LED installation
     ledTotal: 600,
     r1Start: 3,
     r1End: 272,
     r2Start: 300,
-    r2End: 599,
+    r2End: 599
   });
 
   const [
     backendOnline,
-    setBackendOnline,
+    setBackendOnline
   ] = useState(false);
 
-  const [wsOnline, setWsOnline] =
-    useState(false);
+  const [
+    wsOnline,
+    setWsOnline
+  ] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError
+  ] = useState("");
 
-  // Main page or Settings page
-  const [view, setView] =
-    useState("main");
+  const [
+    view,
+    setView
+  ] = useState("main");
 
   const [
     settingsPassword,
-    setSettingsPassword,
+    setSettingsPassword
   ] = useState("");
 
   const [
     settingsMessage,
-    setSettingsMessage,
+    setSettingsMessage
   ] = useState("");
 
   const [
     settingsSaving,
-    setSettingsSaving,
+    setSettingsSaving
   ] = useState(false);
 
   const [
     settingsForm,
-    setSettingsForm,
+    setSettingsForm
   ] = useState({
     newPassword: "",
     aromaUI: false,
@@ -174,28 +240,39 @@ export default function App() {
     r1Start: 3,
     r1End: 272,
     r2Start: 300,
-    r2End: 599,
+    r2End: 599
   });
 
-  const wsRef = useRef(null);
+  const wsRef =
+    useRef(null);
 
   const primeActiveRef =
     useRef(false);
 
-  const connectedText = useMemo(() => {
-    if (!backendOnline) {
-      return "BACKEND OFFLINE";
-    }
+  const connectedText =
+    useMemo(() => {
+      if (!backendOnline) {
+        return (
+          "BACKEND OFFLINE"
+        );
+      }
 
-    if (!wsOnline) {
-      return "WAITING FOR LIVE STATUS";
-    }
+      if (!wsOnline) {
+        return (
+          "WAITING FOR LIVE STATUS"
+        );
+      }
 
-    return "REMOTE MQTT LINK ACTIVE";
-  }, [backendOnline, wsOnline]);
+      return (
+        "REMOTE MQTT LINK ACTIVE"
+      );
+    }, [
+      backendOnline,
+      wsOnline
+    ]);
 
   // =========================================================
-  // SAVE DEVICE ID
+  // DEVICE ID STORAGE
   // =========================================================
 
   useEffect(() => {
@@ -215,15 +292,21 @@ export default function App() {
   // =========================================================
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/health`)
-      .then((r) => r.json())
+    fetch(
+      `${API_BASE}/api/health`
+    )
+      .then((r) =>
+        r.json()
+      )
       .then((d) =>
         setBackendOnline(
           Boolean(d.ok)
         )
       )
       .catch(() =>
-        setBackendOnline(false)
+        setBackendOnline(
+          false
+        )
       );
   }, []);
 
@@ -232,14 +315,16 @@ export default function App() {
   // =========================================================
 
   useEffect(() => {
-    if (!showQr) return;
+    if (!showQr) {
+      return;
+    }
 
     const scanner =
       new Html5QrcodeScanner(
         "qr-reader",
         {
           fps: 10,
-          qrbox: 250,
+          qrbox: 250
         },
         false
       );
@@ -251,7 +336,9 @@ export default function App() {
             decodedText
           );
 
-        if (cleaned.length === 12) {
+        if (
+          cleaned.length === 12
+        ) {
           setEntryId(cleaned);
 
           localStorage.setItem(
@@ -259,7 +346,9 @@ export default function App() {
             cleaned
           );
 
-          setDeviceId(cleaned);
+          setDeviceId(
+            cleaned
+          );
 
           setShowQr(false);
 
@@ -286,31 +375,39 @@ export default function App() {
   // =========================================================
 
   useEffect(() => {
-    if (!deviceId) return;
+    if (!deviceId) {
+      return;
+    }
 
     let stopped = false;
 
-    // Get initial status
     fetch(
       `${API_BASE}/api/device/${deviceId}/status`
     )
-      .then((r) => r.json())
+      .then((r) =>
+        r.json()
+      )
       .then((d) => {
         if (d) {
-          setStatus((prev) => ({
-            ...prev,
-            ...d,
-          }));
+          setStatus(
+            (prev) => ({
+              ...prev,
+              ...d
+            })
+          );
         }
       })
       .catch(() => {});
 
     function connectWs() {
-      if (stopped) return;
+      if (stopped) {
+        return;
+      }
 
-      const ws = new WebSocket(
-        `${WS_BASE}?deviceId=${deviceId}`
-      );
+      const ws =
+        new WebSocket(
+          `${WS_BASE}?deviceId=${deviceId}`
+        );
 
       wsRef.current = ws;
 
@@ -320,33 +417,44 @@ export default function App() {
 
         ws.send(
           JSON.stringify({
-            type: "subscribe",
-            deviceId,
+            type:
+              "subscribe",
+
+            deviceId
           })
         );
       };
 
-      ws.onmessage = (event) => {
-        try {
-          const msg =
-            JSON.parse(event.data);
+      ws.onmessage =
+        (event) => {
+          try {
+            const msg =
+              JSON.parse(
+                event.data
+              );
 
-          if (
-            msg.type === "status"
-          ) {
-            setStatus((prev) => ({
-              ...prev,
-              ...msg.status,
-            }));
-          }
+            if (
+              msg.type ===
+              "status"
+            ) {
+              setStatus(
+                (prev) => ({
+                  ...prev,
+                  ...msg.status
+                })
+              );
+            }
 
-          if (
-            msg.type === "error"
-          ) {
-            setError(msg.error);
-          }
-        } catch {}
-      };
+            if (
+              msg.type ===
+              "error"
+            ) {
+              setError(
+                msg.error
+              );
+            }
+          } catch {}
+        };
 
       ws.onclose = () => {
         setWsOnline(false);
@@ -374,56 +482,72 @@ export default function App() {
   }, [deviceId]);
 
   // =========================================================
-  // LOCAL TIMER COUNTDOWN
+  // TIMER COUNTDOWN
   // =========================================================
 
   useEffect(() => {
     const interval =
       setInterval(() => {
-        setStatus((prev) => {
-          const next = {
-            ...prev,
-          };
+        setStatus(
+          (prev) => {
+            const next = {
+              ...prev
+            };
 
-          if (
-            next.on &&
-            Number(next.tm) > 0
-          ) {
-            next.tm = Math.max(
-              0,
-              Number(next.tm) -
-                1 / 60
-            );
+            if (
+              next.on &&
+              Number(
+                next.tm
+              ) > 0
+            ) {
+              next.tm =
+                Math.max(
+                  0,
+                  Number(
+                    next.tm
+                  ) -
+                    1 / 60
+                );
+            }
+
+            if (
+              Number(
+                next.itm
+              ) > 0
+            ) {
+              next.itm =
+                Math.max(
+                  0,
+                  Number(
+                    next.itm
+                  ) -
+                    1 / 60
+                );
+
+              next.iron =
+                next.itm > 0;
+            }
+
+            return next;
           }
-
-          if (
-            Number(next.itm) > 0
-          ) {
-            next.itm = Math.max(
-              0,
-              Number(next.itm) -
-                1 / 60
-            );
-
-            next.iron =
-              next.itm > 0;
-          }
-
-          return next;
-        });
+        );
       }, 1000);
 
     return () =>
-      clearInterval(interval);
+      clearInterval(
+        interval
+      );
   }, []);
 
   // =========================================================
-  // DEVICE ID
+  // DEVICE
   // =========================================================
 
   function saveDeviceId() {
     const cleaned =
-      cleanDeviceId(entryId);
+      cleanDeviceId(
+        entryId
+      );
 
     if (
       cleaned.length !== 12
@@ -441,7 +565,6 @@ export default function App() {
     );
 
     setDeviceId(cleaned);
-
     setError("");
   }
 
@@ -479,12 +602,12 @@ export default function App() {
       r1Start: 3,
       r1End: 272,
       r2Start: 300,
-      r2End: 599,
+      r2End: 599
     });
   }
 
   // =========================================================
-  // SEND COMMAND
+  // COMMAND
   // =========================================================
 
   async function cmd(
@@ -493,28 +616,32 @@ export default function App() {
     optimistic = null
   ) {
     if (optimistic) {
-      setStatus((prev) => ({
-        ...prev,
-        ...optimistic,
-      }));
+      setStatus(
+        (prev) => ({
+          ...prev,
+          ...optimistic
+        })
+      );
     }
 
     try {
-      const r = await fetch(
-        `${API_BASE}/api/device/${deviceId}/cmd/${command}`,
-        {
-          method: "POST",
+      const r =
+        await fetch(
+          `${API_BASE}/api/device/${deviceId}/cmd/${command}`,
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-          body: JSON.stringify({
-            value,
-          }),
-        }
-      );
+            body:
+              JSON.stringify({
+                value
+              })
+          }
+        );
 
       const data =
         await r.json();
@@ -545,9 +672,14 @@ export default function App() {
 
   function selectedRoom() {
     const rm =
-      Number(status.rm ?? 3);
+      Number(
+        status.rm ?? 3
+      );
 
-    return rm >= 1 && rm <= 3
+    return (
+      rm >= 1 &&
+      rm <= 3
+    )
       ? rm
       : 3;
   }
@@ -558,13 +690,15 @@ export default function App() {
 
     return (
       ROOMS.find(
-        ([id]) => id === rm
-      )?.[1] || "BOTH R"
+        ([id]) =>
+          id === rm
+      )?.[1] ||
+      "BOTH R"
     );
   }
 
   // =========================================================
-  // AROMATHERAPY PRIME
+  // PRIME
   // =========================================================
 
   function startPrime() {
@@ -577,11 +711,13 @@ export default function App() {
     primeActiveRef.current =
       true;
 
-    setStatus((prev) => ({
-      ...prev,
-      amanual: true,
-      apump: true,
-    }));
+    setStatus(
+      (prev) => ({
+        ...prev,
+        amanual: true,
+        apump: true
+      })
+    );
 
     cmd(
       "aroma-manual",
@@ -599,11 +735,13 @@ export default function App() {
     primeActiveRef.current =
       false;
 
-    setStatus((prev) => ({
-      ...prev,
-      amanual: false,
-      apump: false,
-    }));
+    setStatus(
+      (prev) => ({
+        ...prev,
+        amanual: false,
+        apump: false
+      })
+    );
 
     if (deviceId) {
       cmd(
@@ -614,20 +752,29 @@ export default function App() {
   }
 
   // =========================================================
-  // SETTINGS
+  // OPEN SETTINGS
+  //
+  // Password is now verified by the ESP32 BEFORE the
+  // settings page opens.
   // =========================================================
 
-  function openSettings() {
+  async function openSettings() {
+
     const password =
       window.prompt(
         "Enter settings password:"
       );
 
-    if (password === null) {
+    if (
+      password === null
+    ) {
       return;
     }
 
-    if (!password.trim()) {
+    const cleanPassword =
+      password.trim();
+
+    if (!cleanPassword) {
       setError(
         "Settings password is required."
       );
@@ -635,48 +782,97 @@ export default function App() {
       return;
     }
 
-    setSettingsPassword(
-      password.trim()
-    );
-
-    setSettingsForm({
-      newPassword: "",
-
-      aromaUI:
-        boolFromStatus(
-          status.aromaUI
-        ),
-
-      ledTotal:
-        Number(
-          status.ledTotal ?? 600
-        ),
-
-      r1Start:
-        Number(
-          status.r1Start ?? 3
-        ),
-
-      r1End:
-        Number(
-          status.r1End ?? 272
-        ),
-
-      r2Start:
-        Number(
-          status.r2Start ?? 300
-        ),
-
-      r2End:
-        Number(
-          status.r2End ?? 599
-        ),
-    });
-
-    setSettingsMessage("");
     setError("");
 
-    setView("settings");
+    try {
+      const r =
+        await fetch(
+          `${API_BASE}/api/device/${deviceId}/settings/verify`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                password:
+                  cleanPassword
+              })
+          }
+        );
+
+      const data =
+        await r.json();
+
+      if (!r.ok) {
+        throw new Error(
+          data.error ||
+            "Unable to verify settings password"
+        );
+      }
+
+      // Password was verified by ESP32.
+
+      setSettingsPassword(
+        cleanPassword
+      );
+
+      setSettingsForm({
+        newPassword: "",
+
+        aromaUI:
+          boolFromStatus(
+            status.aromaUI
+          ),
+
+        ledTotal:
+          Number(
+            status.ledTotal ??
+              600
+          ),
+
+        r1Start:
+          Number(
+            status.r1Start ??
+              3
+          ),
+
+        r1End:
+          Number(
+            status.r1End ??
+              272
+          ),
+
+        r2Start:
+          Number(
+            status.r2Start ??
+              300
+          ),
+
+        r2End:
+          Number(
+            status.r2End ??
+              599
+          )
+      });
+
+      setSettingsMessage(
+        ""
+      );
+
+      setView(
+        "settings"
+      );
+    } catch (e) {
+      setError(
+        e.message ||
+          "Unable to verify settings password"
+      );
+    }
   }
 
   function updateSetting(
@@ -686,12 +882,13 @@ export default function App() {
     setSettingsForm(
       (prev) => ({
         ...prev,
-        [name]: value,
+        [name]: value
       })
     );
   }
 
   function validateSettingsForm() {
+
     const ledTotal =
       Number(
         settingsForm.ledTotal
@@ -735,8 +932,7 @@ export default function App() {
       )
     ) {
       return (
-        "LED settings must " +
-        "be whole numbers."
+        "LED settings must be whole numbers."
       );
     }
 
@@ -745,8 +941,7 @@ export default function App() {
       ledTotal > 5000
     ) {
       return (
-        "Total LEDs must be " +
-        "between 1 and 5000."
+        "Total LEDs must be between 1 and 5000."
       );
     }
 
@@ -773,11 +968,18 @@ export default function App() {
     return "";
   }
 
+  // =========================================================
+  // SAVE SETTINGS
+  // =========================================================
+
   async function saveSettings() {
+
     const validationError =
       validateSettingsForm();
 
-    if (validationError) {
+    if (
+      validationError
+    ) {
       setSettingsMessage(
         validationError
       );
@@ -825,26 +1027,28 @@ export default function App() {
       r2End:
         Number(
           settingsForm.r2End
-        ),
+        )
     };
 
     try {
-      const r = await fetch(
-        `${API_BASE}/api/device/${deviceId}/settings`,
-        {
-          method: "POST",
+      const r =
+        await fetch(
+          `${API_BASE}/api/device/${deviceId}/settings`,
+          {
+            method:
+              "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
 
-          body:
-            JSON.stringify(
-              payload
-            ),
-        }
-      );
+            body:
+              JSON.stringify(
+                payload
+              )
+          }
+        );
 
       const data =
         await r.json();
@@ -856,27 +1060,29 @@ export default function App() {
         );
       }
 
-      setStatus((prev) => ({
-        ...prev,
+      setStatus(
+        (prev) => ({
+          ...prev,
 
-        aromaUI:
-          payload.aromaUI,
+          aromaUI:
+            payload.aromaUI,
 
-        ledTotal:
-          payload.ledTotal,
+          ledTotal:
+            payload.ledTotal,
 
-        r1Start:
-          payload.r1Start,
+          r1Start:
+            payload.r1Start,
 
-        r1End:
-          payload.r1End,
+          r1End:
+            payload.r1End,
 
-        r2Start:
-          payload.r2Start,
+          r2Start:
+            payload.r2Start,
 
-        r2End:
-          payload.r2End,
-      }));
+          r2End:
+            payload.r2End
+        })
+      );
 
       if (
         payload.newPassword
@@ -889,12 +1095,12 @@ export default function App() {
       setSettingsForm(
         (prev) => ({
           ...prev,
-          newPassword: "",
+          newPassword: ""
         })
       );
 
       setSettingsMessage(
-        "Settings sent to the controller. Waiting for device confirmation/status."
+        "Settings sent to controller."
       );
     } catch (e) {
       setSettingsMessage(
@@ -902,17 +1108,20 @@ export default function App() {
           "Unable to save settings"
       );
     } finally {
-      setSettingsSaving(false);
+      setSettingsSaving(
+        false
+      );
     }
   }
 
   // =========================================================
-  // DEVICE ID PAGE
+  // DEVICE LOGIN PAGE
   // =========================================================
 
   if (!deviceId) {
     return (
       <div className="page setupPage">
+
         <div className="panel setupPanel">
 
           <div className="brand">
@@ -924,13 +1133,15 @@ export default function App() {
           </h1>
 
           <p>
-            Enter your sauna
-            Device ID to continue.
+            Enter your sauna Device ID
+            to continue.
           </p>
 
           <input
             className="deviceInput"
+
             value={entryId}
+
             onChange={(e) =>
               setEntryId(
                 cleanDeviceId(
@@ -938,18 +1149,26 @@ export default function App() {
                 )
               )
             }
-            placeholder="A0B76314F23C"
+
+            placeholder=
+              "A0B76314F23C"
           />
 
           <button
-            className="primary fullBtn"
-            onClick={saveDeviceId}
+            className=
+              "primary fullBtn"
+
+            onClick={
+              saveDeviceId
+            }
           >
             CONNECT
           </button>
 
           <button
-            className="secondary fullBtn"
+            className=
+              "secondary fullBtn"
+
             onClick={() =>
               setShowQr(true)
             }
@@ -962,10 +1181,11 @@ export default function App() {
 
               <div
                 id="qr-reader"
-              ></div>
+              />
 
               <button
                 className="smallBtn"
+
                 onClick={() =>
                   setShowQr(false)
                 }
@@ -983,6 +1203,7 @@ export default function App() {
           )}
 
         </div>
+
       </div>
     );
   }
@@ -991,7 +1212,9 @@ export default function App() {
   // SETTINGS PAGE
   // =========================================================
 
-  if (view === "settings") {
+  if (
+    view === "settings"
+  ) {
     return (
       <div className="page">
 
@@ -1000,6 +1223,7 @@ export default function App() {
           <div className="topLine">
 
             <div>
+
               <div className="brand">
                 GEYSERSTEAM
               </div>
@@ -1007,13 +1231,18 @@ export default function App() {
               <h1>
                 Settings
               </h1>
+
             </div>
 
             <button
               className="smallBtn"
+
               onClick={() => {
                 setView("main");
-                setSettingsMessage("");
+
+                setSettingsMessage(
+                  ""
+                );
               }}
             >
               Back
@@ -1034,32 +1263,48 @@ export default function App() {
 
           {/* SECURITY */}
 
-          <section className="card settingsCard">
+          <section
+            className=
+              "card settingsCard"
+          >
 
             <Divider
               label="Security"
             />
 
-            <label className="settingsLabel">
+            <label
+              className=
+                "settingsLabel"
+            >
               Change default password
             </label>
 
             <input
-              className="settingsInput"
+              className=
+                "settingsInput"
+
               type="password"
+
               value={
-                settingsForm.newPassword
+                settingsForm
+                  .newPassword
               }
+
               onChange={(e) =>
                 updateSetting(
                   "newPassword",
                   e.target.value
                 )
               }
-              placeholder="Leave blank to keep current password"
+
+              placeholder=
+                "Leave blank to keep current password"
             />
 
-            <div className="settingsHelp">
+            <div
+              className=
+                "settingsHelp"
+            >
               The master password
               remains available even
               if the default password
@@ -1068,15 +1313,21 @@ export default function App() {
 
           </section>
 
-          {/* AROMATHERAPY ENABLE */}
+          {/* AROMATHERAPY */}
 
-          <section className="card settingsCard">
+          <section
+            className=
+              "card settingsCard"
+          >
 
             <Divider
               label="Aromatherapy"
             />
 
-            <label className="switchRow">
+            <label
+              className=
+                "switchRow"
+            >
 
               <div>
 
@@ -1085,8 +1336,11 @@ export default function App() {
                   controls
                 </strong>
 
-                <div className="settingsHelp">
-                  Show the aromatherapy
+                <div
+                  className=
+                    "settingsHelp"
+                >
+                  Show aromatherapy
                   controls on the main
                   page when the hardware
                   is installed.
@@ -1096,11 +1350,14 @@ export default function App() {
 
               <input
                 type="checkbox"
+
                 checked={
                   Boolean(
-                    settingsForm.aromaUI
+                    settingsForm
+                      .aromaUI
                   )
                 }
+
                 onChange={(e) =>
                   updateSetting(
                     "aromaUI",
@@ -1115,24 +1372,36 @@ export default function App() {
 
           {/* LED SETTINGS */}
 
-          <section className="card settingsCard">
+          <section
+            className=
+              "card settingsCard"
+          >
 
             <Divider
               label="LED Installation"
             />
 
-            <label className="settingsLabel">
+            <label
+              className=
+                "settingsLabel"
+            >
               Total physical LEDs
             </label>
 
             <input
-              className="settingsInput"
+              className=
+                "settingsInput"
+
               type="number"
+
               min="1"
               max="5000"
+
               value={
-                settingsForm.ledTotal
+                settingsForm
+                  .ledTotal
               }
+
               onChange={(e) =>
                 updateSetting(
                   "ledTotal",
@@ -1143,21 +1412,33 @@ export default function App() {
               }
             />
 
-            <div className="settingsGrid">
+            <div
+              className=
+                "settingsGrid"
+            >
 
               <div>
 
-                <label className="settingsLabel">
+                <label
+                  className=
+                    "settingsLabel"
+                >
                   Sauna start
                 </label>
 
                 <input
-                  className="settingsInput"
+                  className=
+                    "settingsInput"
+
                   type="number"
+
                   min="0"
+
                   value={
-                    settingsForm.r1Start
+                    settingsForm
+                      .r1Start
                   }
+
                   onChange={(e) =>
                     updateSetting(
                       "r1Start",
@@ -1172,17 +1453,26 @@ export default function App() {
 
               <div>
 
-                <label className="settingsLabel">
+                <label
+                  className=
+                    "settingsLabel"
+                >
                   Sauna end
                 </label>
 
                 <input
-                  className="settingsInput"
+                  className=
+                    "settingsInput"
+
                   type="number"
+
                   min="0"
+
                   value={
-                    settingsForm.r1End
+                    settingsForm
+                      .r1End
                   }
+
                   onChange={(e) =>
                     updateSetting(
                       "r1End",
@@ -1197,17 +1487,26 @@ export default function App() {
 
               <div>
 
-                <label className="settingsLabel">
+                <label
+                  className=
+                    "settingsLabel"
+                >
                   Steam start
                 </label>
 
                 <input
-                  className="settingsInput"
+                  className=
+                    "settingsInput"
+
                   type="number"
+
                   min="0"
+
                   value={
-                    settingsForm.r2Start
+                    settingsForm
+                      .r2Start
                   }
+
                   onChange={(e) =>
                     updateSetting(
                       "r2Start",
@@ -1222,17 +1521,26 @@ export default function App() {
 
               <div>
 
-                <label className="settingsLabel">
+                <label
+                  className=
+                    "settingsLabel"
+                >
                   Steam end
                 </label>
 
                 <input
-                  className="settingsInput"
+                  className=
+                    "settingsInput"
+
                   type="number"
+
                   min="0"
+
                   value={
-                    settingsForm.r2End
+                    settingsForm
+                      .r2End
                   }
+
                   onChange={(e) =>
                     updateSetting(
                       "r2End",
@@ -1248,8 +1556,13 @@ export default function App() {
             </div>
 
             <button
-              className="primary fullBtn saveSettingsBtn"
-              onClick={saveSettings}
+              className=
+                "primary fullBtn saveSettingsBtn"
+
+              onClick={
+                saveSettings
+              }
+
               disabled={
                 settingsSaving
               }
@@ -1260,7 +1573,10 @@ export default function App() {
             </button>
 
             {settingsMessage && (
-              <div className="settingsMessage">
+              <div
+                className=
+                  "settingsMessage"
+              >
                 {settingsMessage}
               </div>
             )}
@@ -1268,12 +1584,13 @@ export default function App() {
           </section>
 
         </div>
+
       </div>
     );
   }
 
   // =========================================================
-  // MAIN CONTROL PAGE
+  // MAIN PAGE
   // =========================================================
 
   return (
@@ -1335,20 +1652,23 @@ export default function App() {
                 ? "power on"
                 : "power"
             }
+
             onClick={() =>
               cmd(
                 "power",
+
                 status.on
                   ? "off"
                   : "on",
+
                 {
                   on:
-                    !status.on,
+                    !status.on
                 }
               )
             }
           >
-            <span></span>
+            <span />
           </button>
 
           <div className="label">
@@ -1405,24 +1725,29 @@ export default function App() {
             min="120"
             max="220"
             step="0.5"
+
             value={
               Number(
-                status.t ?? 120
+                status.t ??
+                  120
               )
             }
+
             onChange={(v) =>
               cmd(
                 "target",
                 Number(v),
                 {
-                  t: Number(v),
+                  t:
+                    Number(v)
                 }
               )
             }
+
             ticks={[
               "120",
               "170",
-              "220",
+              "220"
             ]}
           />
 
@@ -1430,29 +1755,33 @@ export default function App() {
             min="0"
             max="120"
             step="5"
+
             value={
               timerDisplay(
                 status.tm
               )
             }
+
             onChange={(v) =>
               cmd(
                 "timer",
                 Number(v),
                 {
-                  tm: Number(v),
+                  tm:
+                    Number(v),
 
                   on:
                     Number(v) > 0
                       ? true
-                      : status.on,
+                      : status.on
                 }
               )
             }
+
             ticks={[
               "0",
               "60",
-              "120",
+              "120"
             ]}
           />
 
@@ -1484,11 +1813,13 @@ export default function App() {
             min="0"
             max="120"
             step="5"
+
             value={
               timerDisplay(
                 status.itm
               )
             }
+
             onChange={(v) =>
               cmd(
                 "irtime",
@@ -1498,15 +1829,18 @@ export default function App() {
                     Number(v),
 
                   iron:
-                    Number(v) > 0,
+                    Number(v) >
+                    0
                 }
               )
             }
+
             ticks={[
               "0",
               "60",
-              "120",
+              "120"
             ]}
+
             accent="red"
           />
 
@@ -1520,32 +1854,35 @@ export default function App() {
             label="Chromotherapy"
           />
 
-          <div className="roomSelector">
+          <div
+            className=
+              "roomSelector"
+          >
 
             {ROOMS.map(
               ([id, name]) => (
-
                 <button
                   key={id}
+
                   className={
                     selectedRoom() ===
                     id
                       ? "roomBtn active"
                       : "roomBtn"
                   }
+
                   onClick={() =>
                     cmd(
                       "room",
                       id,
                       {
-                        rm: id,
+                        rm: id
                       }
                     )
                   }
                 >
                   {name}
                 </button>
-
               )
             )}
 
@@ -1569,11 +1906,11 @@ export default function App() {
                 ([
                   id,
                   name,
-                  cls,
+                  cls
                 ]) => (
-
                   <button
                     key={id}
+
                     className={
                       `mode ${cls} ${
                         Number(
@@ -1584,20 +1921,20 @@ export default function App() {
                           : ""
                       }`
                     }
+
                     onClick={() =>
                       cmd(
                         "mode",
                         id,
                         {
                           mode: id,
-                          lon: true,
+                          lon: true
                         }
                       )
                     }
                   >
                     {name}
                   </button>
-
                 )
               )}
 
@@ -1607,15 +1944,18 @@ export default function App() {
                     ? "ledToggle active"
                     : "ledToggle"
                 }
+
                 onClick={() =>
                   cmd(
                     "leds",
+
                     status.lon
                       ? "off"
                       : "on",
+
                     {
                       lon:
-                        !status.lon,
+                        !status.lon
                     }
                   )
                 }
@@ -1635,22 +1975,27 @@ export default function App() {
                 type="range"
                 min="10"
                 max="255"
+
                 value={
                   Number(
-                    status.b ?? 150
+                    status.b ??
+                      150
                   )
                 }
+
                 onChange={(e) =>
                   cmd(
                     "bright",
+
                     Number(
                       e.target.value
                     ),
+
                     {
                       b:
                         Number(
                           e.target.value
-                        ),
+                        )
                     }
                   )
                 }
@@ -1666,60 +2011,60 @@ export default function App() {
 
         </section>
 
-        {/* =================================================
-            AROMATHERAPY
-
-            Only shown when aromaUI is enabled
-            in device settings.
-        ================================================= */}
+        {/* AROMATHERAPY */}
 
         {boolFromStatus(
           status.aromaUI
         ) && (
-
-          <section className="card aromaCard">
+          <section
+            className=
+              "card aromaCard"
+          >
 
             <Divider
               label="Aromatherapy"
             />
 
-            {/* FRAGRANCE */}
-
-            <div className="fragranceGrid">
+            <div
+              className=
+                "fragranceGrid"
+            >
 
               {[1, 2, 3, 4].map(
                 (id) => (
-
                   <button
                     key={id}
+
                     className={
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       ) === id
                         ? "fragranceBtn active"
                         : "fragranceBtn"
                     }
+
                     onClick={() =>
                       cmd(
                         "aroma-fragrance",
                         id,
                         {
-                          af: id,
+                          af: id
                         }
                       )
                     }
                   >
                     FRAGRANCE {id}
                   </button>
-
                 )
               )}
 
             </div>
 
-            {/* STEAM / AROMA / PRIME */}
-
-            <div className="aromaActionGrid">
+            <div
+              className=
+                "aromaActionGrid"
+            >
 
               <button
                 className={
@@ -1729,6 +2074,7 @@ export default function App() {
                     ? "aromaAction active"
                     : "aromaAction"
                 }
+
                 onClick={() =>
                   cmd(
                     "steam",
@@ -1743,7 +2089,7 @@ export default function App() {
                       steam:
                         !boolFromStatus(
                           status.steam
-                        ),
+                        )
                     }
                   )
                 }
@@ -1765,6 +2111,7 @@ export default function App() {
                     ? "aromaAction active"
                     : "aromaAction"
                 }
+
                 onClick={() =>
                   cmd(
                     "aroma-enable",
@@ -1779,7 +2126,7 @@ export default function App() {
                       aen:
                         !boolFromStatus(
                           status.aen
-                        ),
+                        )
                     }
                   )
                 }
@@ -1833,15 +2180,14 @@ export default function App() {
 
             </div>
 
-            {/* DOSING PERIOD */}
-
             <p className="summary">
 
               Drop period:{" "}
 
               <b>
                 {Number(
-                  status.ap ?? 60
+                  status.ap ??
+                    60
                 )}
               </b>
 
@@ -1853,30 +2199,35 @@ export default function App() {
               min="10"
               max="300"
               step="5"
+
               value={
                 Number(
-                  status.ap ?? 60
+                  status.ap ??
+                    60
                 )
               }
+
               onChange={(v) =>
                 cmd(
                   "aroma-period",
+
                   Number(v),
+
                   {
                     ap:
-                      Number(v),
+                      Number(v)
                   }
                 )
               }
+
               ticks={[
                 "10",
                 "155",
-                "300",
+                "300"
               ]}
+
               accent="green"
             />
-
-            {/* PUMP STATUS */}
 
             <div
               className={
@@ -1896,12 +2247,14 @@ export default function App() {
                   )
                   ? `Priming fragrance ${
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       )
                     }`
                   : `Dosing fragrance ${
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       )
                     }`
                 : "Pump stopped"}
@@ -1909,20 +2262,26 @@ export default function App() {
             </div>
 
           </section>
-
         )}
 
-        {/* SETTINGS BUTTON */}
+        {/* SETTINGS */}
 
-        <section className="card systemCard">
+        <section
+          className=
+            "card systemCard"
+        >
 
           <Divider
             label="System"
           />
 
           <button
-            className="settingsBtn"
-            onClick={openSettings}
+            className=
+              "settingsBtn"
+
+            onClick={
+              openSettings
+            }
           >
             SETTINGS
           </button>
@@ -1930,6 +2289,7 @@ export default function App() {
         </section>
 
       </div>
+
     </div>
   );
 }
@@ -1939,13 +2299,15 @@ export default function App() {
 // ===========================================================
 
 function Divider({
-  label,
+  label
 }) {
   return (
     <div className="divider">
+
       <span>
         {label}
       </span>
+
     </div>
   );
 }
@@ -1968,30 +2330,36 @@ function Slider({
         className={
           `slider ${accent}`
         }
+
         type="range"
+
         value={value}
+
         onChange={(e) =>
           onChange(
             e.target.value
           )
         }
+
         {...props}
       />
 
       <div className="ticks">
 
-        {ticks.map((t) => (
+        {ticks.map(
+          (t) => (
+            <div
+              className="tick"
+              key={t}
+            >
 
-          <div
-            className="tick"
-            key={t}
-          >
-            <span>
-              {t}
-            </span>
-          </div>
+              <span>
+                {t}
+              </span>
 
-        ))}
+            </div>
+          )
+        )}
 
       </div>
 
