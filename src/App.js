@@ -9,6 +9,8 @@ import {
   Html5QrcodeScanner
 } from "html5-qrcode";
 
+import "./App.css";
+
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
