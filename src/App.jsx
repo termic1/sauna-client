@@ -9,15 +9,12 @@ import {
   Html5QrcodeScanner
 } from "html5-qrcode";
 
-import "./App.css";
-
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
 
 function makeWsBase() {
-  const url =
-    new URL(API_BASE);
+  const url = new URL(API_BASE);
 
   url.protocol =
     url.protocol === "https:"
@@ -29,8 +26,7 @@ function makeWsBase() {
   return url.toString();
 }
 
-const WS_BASE =
-  makeWsBase();
+const WS_BASE = makeWsBase();
 
 const MODES = [
   [1, "FIRE", "orange"],
@@ -47,18 +43,9 @@ const MODES = [
   [12, "PARTY", "party"]
 ];
 
-const ROOMS = [
-  [1, "SAUNA"],
-  [2, "STEAM R"],
-  [3, "BOTH R"]
-];
-
 function cleanDeviceId(value) {
   return String(value || "")
-    .replace(
-      /[^a-fA-F0-9]/g,
-      ""
-    )
+    .replace(/[^a-fA-F0-9]/g, "")
     .toUpperCase();
 }
 
@@ -69,38 +56,27 @@ function cToF(c) {
     return "--";
   }
 
-  return (
-    n * 1.8 + 32
-  ).toFixed(1);
+  return (n * 1.8 + 32).toFixed(1);
 }
 
 function timerDisplay(value) {
   const n = Number(value);
 
-  if (
-    !Number.isFinite(n) ||
-    n <= 0
-  ) {
+  if (!Number.isFinite(n) || n <= 0) {
     return 0;
   }
 
   return Math.ceil(n);
 }
 
-function getDeviceIdFromText(
-  text = ""
-) {
-  const raw =
-    String(text || "").trim();
+function getDeviceIdFromText(text = "") {
+  const raw = String(text || "").trim();
 
   try {
-    const url =
-      new URL(raw);
+    const url = new URL(raw);
 
     return cleanDeviceId(
-      url.searchParams.get(
-        "device"
-      )
+      url.searchParams.get("device")
     );
   } catch {}
 
@@ -114,9 +90,7 @@ function getDeviceIdFromText(
       params.get("device")
     );
 
-  if (
-    fromUrl.length === 12
-  ) {
+  if (fromUrl.length === 12) {
     return fromUrl;
   }
 
@@ -149,53 +123,45 @@ export default function App() {
           "saunaDeviceId"
         ) || "";
 
-  const [
-    showQr,
-    setShowQr
-  ] = useState(false);
+  const [showQr, setShowQr] =
+    useState(false);
 
-  const [
-    deviceId,
-    setDeviceId
-  ] = useState(
-    initialDeviceId
-  );
+  const [deviceId, setDeviceId] =
+    useState(initialDeviceId);
 
-  const [
-    entryId,
-    setEntryId
-  ] = useState(
-    initialDeviceId
-  );
+  const [entryId, setEntryId] =
+    useState(initialDeviceId);
 
-  const [
-    status,
-    setStatus
-  ] = useState({
-    t: 120,
-    tm: 0,
-    itm: 0,
-    b: 150,
-    mode: 1,
-    lon: true,
-    rm: 3,
+  const [status, setStatus] =
+    useState({
+      t: 120,
+      tm: 0,
+      itm: 0,
+      b: 150,
+      mode: 1,
+      lon: true,
+      rm: 3,
 
-    // Aromatherapy
-    af: 1,
-    aen: false,
-    ap: 60,
-    steam: false,
-    apump: false,
-    amanual: false,
-    aromaUI: false,
+      // Aromatherapy
+      af: 1,
+      aen: false,
+      ap: 60,
+      steam: false,
+      apump: false,
+      amanual: false,
+      aromaUI: false,
 
-    // LED installation
-    ledTotal: 600,
-    r1Start: 3,
-    r1End: 272,
-    r2Start: 300,
-    r2End: 599
-  });
+      // NEW SETTINGS
+      reverseRooms: false,
+      infraredUI: true,
+
+      // LED installation
+      ledTotal: 600,
+      r1Start: 3,
+      r1End: 272,
+      r2Start: 300,
+      r2End: 599
+    });
 
   const [
     backendOnline,
@@ -207,15 +173,11 @@ export default function App() {
     setWsOnline
   ] = useState(false);
 
-  const [
-    error,
-    setError
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [
-    view,
-    setView
-  ] = useState("main");
+  const [view, setView] =
+    useState("main");
 
   const [
     settingsPassword,
@@ -238,6 +200,11 @@ export default function App() {
   ] = useState({
     newPassword: "",
     aromaUI: false,
+
+    // NEW SETTINGS
+    reverseRooms: false,
+    infraredUI: true,
+
     ledTotal: 600,
     r1Start: 3,
     r1End: 272,
@@ -245,8 +212,7 @@ export default function App() {
     r2End: 599
   });
 
-  const wsRef =
-    useRef(null);
+  const wsRef = useRef(null);
 
   const primeActiveRef =
     useRef(false);
@@ -254,20 +220,14 @@ export default function App() {
   const connectedText =
     useMemo(() => {
       if (!backendOnline) {
-        return (
-          "BACKEND OFFLINE"
-        );
+        return "BACKEND OFFLINE";
       }
 
       if (!wsOnline) {
-        return (
-          "WAITING FOR LIVE STATUS"
-        );
+        return "WAITING FOR LIVE STATUS";
       }
 
-      return (
-        "REMOTE MQTT LINK ACTIVE"
-      );
+      return "REMOTE MQTT LINK ACTIVE";
     }, [
       backendOnline,
       wsOnline
@@ -297,18 +257,14 @@ export default function App() {
     fetch(
       `${API_BASE}/api/health`
     )
-      .then((r) =>
-        r.json()
-      )
+      .then((r) => r.json())
       .then((d) =>
         setBackendOnline(
           Boolean(d.ok)
         )
       )
       .catch(() =>
-        setBackendOnline(
-          false
-        )
+        setBackendOnline(false)
       );
   }, []);
 
@@ -338,9 +294,7 @@ export default function App() {
             decodedText
           );
 
-        if (
-          cleaned.length === 12
-        ) {
+        if (cleaned.length === 12) {
           setEntryId(cleaned);
 
           localStorage.setItem(
@@ -348,10 +302,7 @@ export default function App() {
             cleaned
           );
 
-          setDeviceId(
-            cleaned
-          );
-
+          setDeviceId(cleaned);
           setShowQr(false);
 
           scanner.clear();
@@ -386,9 +337,7 @@ export default function App() {
     fetch(
       `${API_BASE}/api/device/${deviceId}/status`
     )
-      .then((r) =>
-        r.json()
-      )
+      .then((r) => r.json())
       .then((d) => {
         if (d) {
           setStatus(
@@ -419,9 +368,7 @@ export default function App() {
 
         ws.send(
           JSON.stringify({
-            type:
-              "subscribe",
-
+            type: "subscribe",
             deviceId
           })
         );
@@ -436,8 +383,7 @@ export default function App() {
               );
 
             if (
-              msg.type ===
-              "status"
+              msg.type === "status"
             ) {
               setStatus(
                 (prev) => ({
@@ -448,12 +394,9 @@ export default function App() {
             }
 
             if (
-              msg.type ===
-              "error"
+              msg.type === "error"
             ) {
-              setError(
-                msg.error
-              );
+              setError(msg.error);
             }
           } catch {}
         };
@@ -478,7 +421,6 @@ export default function App() {
 
     return () => {
       stopped = true;
-
       wsRef.current?.close();
     };
   }, [deviceId]);
@@ -498,31 +440,23 @@ export default function App() {
 
             if (
               next.on &&
-              Number(
-                next.tm
-              ) > 0
+              Number(next.tm) > 0
             ) {
               next.tm =
                 Math.max(
                   0,
-                  Number(
-                    next.tm
-                  ) -
+                  Number(next.tm) -
                     1 / 60
                 );
             }
 
             if (
-              Number(
-                next.itm
-              ) > 0
+              Number(next.itm) > 0
             ) {
               next.itm =
                 Math.max(
                   0,
-                  Number(
-                    next.itm
-                  ) -
+                  Number(next.itm) -
                     1 / 60
                 );
 
@@ -536,9 +470,7 @@ export default function App() {
       }, 1000);
 
     return () =>
-      clearInterval(
-        interval
-      );
+      clearInterval(interval);
   }, []);
 
   // =========================================================
@@ -547,13 +479,9 @@ export default function App() {
 
   function saveDeviceId() {
     const cleaned =
-      cleanDeviceId(
-        entryId
-      );
+      cleanDeviceId(entryId);
 
-    if (
-      cleaned.length !== 12
-    ) {
+    if (cleaned.length !== 12) {
       setError(
         "Device ID must be 12 hex characters, like A0B76314F23C."
       );
@@ -599,6 +527,9 @@ export default function App() {
       apump: false,
       amanual: false,
       aromaUI: false,
+
+      reverseRooms: false,
+      infraredUI: true,
 
       ledTotal: 600,
       r1Start: 3,
@@ -674,9 +605,7 @@ export default function App() {
 
   function selectedRoom() {
     const rm =
-      Number(
-        status.rm ?? 3
-      );
+      Number(status.rm ?? 3);
 
     return (
       rm >= 1 &&
@@ -686,14 +615,39 @@ export default function App() {
       : 3;
   }
 
+  // IMPORTANT:
+  // Physical Room 1 and Room 2 do NOT change.
+  // Only their displayed names change.
+
+  function roomOptions() {
+    const reversed =
+      boolFromStatus(
+        status.reverseRooms
+      );
+
+    return [
+      [
+        1,
+        reversed
+          ? "STEAM R"
+          : "SAUNA"
+      ],
+      [
+        2,
+        reversed
+          ? "SAUNA"
+          : "STEAM R"
+      ],
+      [3, "BOTH R"]
+    ];
+  }
+
   function roomLabel() {
-    const rm =
-      selectedRoom();
+    const rm = selectedRoom();
 
     return (
-      ROOMS.find(
-        ([id]) =>
-          id === rm
+      roomOptions().find(
+        ([id]) => id === rm
       )?.[1] ||
       "BOTH R"
     );
@@ -710,8 +664,7 @@ export default function App() {
       return;
     }
 
-    primeActiveRef.current =
-      true;
+    primeActiveRef.current = true;
 
     setStatus(
       (prev) => ({
@@ -734,8 +687,7 @@ export default function App() {
       return;
     }
 
-    primeActiveRef.current =
-      false;
+    primeActiveRef.current = false;
 
     setStatus(
       (prev) => ({
@@ -755,9 +707,6 @@ export default function App() {
 
   // =========================================================
   // OPEN SETTINGS
-  //
-  // Password is now verified by the ESP32 BEFORE the
-  // settings page opens.
   // =========================================================
 
   async function openSettings() {
@@ -767,9 +716,7 @@ export default function App() {
         "Enter settings password:"
       );
 
-    if (
-      password === null
-    ) {
+    if (password === null) {
       return;
     }
 
@@ -791,8 +738,7 @@ export default function App() {
         await fetch(
           `${API_BASE}/api/device/${deviceId}/settings/verify`,
           {
-            method:
-              "POST",
+            method: "POST",
 
             headers: {
               "Content-Type":
@@ -817,8 +763,6 @@ export default function App() {
         );
       }
 
-      // Password was verified by ESP32.
-
       setSettingsPassword(
         cleanPassword
       );
@@ -830,6 +774,19 @@ export default function App() {
           boolFromStatus(
             status.aromaUI
           ),
+
+        reverseRooms:
+          boolFromStatus(
+            status.reverseRooms
+          ),
+
+        infraredUI:
+          status.infraredUI ===
+          undefined
+            ? true
+            : boolFromStatus(
+                status.infraredUI
+              ),
 
         ledTotal:
           Number(
@@ -862,13 +819,9 @@ export default function App() {
           )
       });
 
-      setSettingsMessage(
-        ""
-      );
+      setSettingsMessage("");
+      setView("settings");
 
-      setView(
-        "settings"
-      );
     } catch (e) {
       setError(
         e.message ||
@@ -979,9 +932,7 @@ export default function App() {
     const validationError =
       validateSettingsForm();
 
-    if (
-      validationError
-    ) {
+    if (validationError) {
       setSettingsMessage(
         validationError
       );
@@ -1004,6 +955,20 @@ export default function App() {
       aromaUI:
         Boolean(
           settingsForm.aromaUI
+        ),
+
+      // NEW
+      reverseRooms:
+        Boolean(
+          settingsForm
+            .reverseRooms
+        ),
+
+      // NEW
+      infraredUI:
+        Boolean(
+          settingsForm
+            .infraredUI
         ),
 
       ledTotal:
@@ -1037,8 +1002,7 @@ export default function App() {
         await fetch(
           `${API_BASE}/api/device/${deviceId}/settings`,
           {
-            method:
-              "POST",
+            method: "POST",
 
             headers: {
               "Content-Type":
@@ -1068,6 +1032,12 @@ export default function App() {
 
           aromaUI:
             payload.aromaUI,
+
+          reverseRooms:
+            payload.reverseRooms,
+
+          infraredUI:
+            payload.infraredUI,
 
           ledTotal:
             payload.ledTotal,
@@ -1104,15 +1074,16 @@ export default function App() {
       setSettingsMessage(
         "Settings sent to controller."
       );
+
     } catch (e) {
+
       setSettingsMessage(
         e.message ||
           "Unable to save settings"
       );
+
     } finally {
-      setSettingsSaving(
-        false
-      );
+      setSettingsSaving(false);
     }
   }
 
@@ -1214,9 +1185,7 @@ export default function App() {
   // SETTINGS PAGE
   // =========================================================
 
-  if (
-    view === "settings"
-  ) {
+  if (view === "settings") {
     return (
       <div className="page">
 
@@ -1241,10 +1210,7 @@ export default function App() {
 
               onClick={() => {
                 setView("main");
-
-                setSettingsMessage(
-                  ""
-                );
+                setSettingsMessage("");
               }}
             >
               Back
@@ -1327,8 +1293,7 @@ export default function App() {
             />
 
             <label
-              className=
-                "switchRow"
+              className="switchRow"
             >
 
               <div>
@@ -1363,6 +1328,119 @@ export default function App() {
                 onChange={(e) =>
                   updateSetting(
                     "aromaUI",
+                    e.target.checked
+                  )
+                }
+              />
+
+            </label>
+
+          </section>
+
+          {/* ROOM NAMES */}
+
+          <section
+            className=
+              "card settingsCard"
+          >
+
+            <Divider
+              label="Rooms"
+            />
+
+            <label
+              className="switchRow"
+            >
+
+              <div>
+
+                <strong>
+                  Reverse Sauna / Steam
+                  room names
+                </strong>
+
+                <div
+                  className=
+                    "settingsHelp"
+                >
+                  Only changes the
+                  displayed names.
+                  Physical Room 1 and
+                  Room 2 wiring remain
+                  unchanged.
+                </div>
+
+              </div>
+
+              <input
+                type="checkbox"
+
+                checked={
+                  Boolean(
+                    settingsForm
+                      .reverseRooms
+                  )
+                }
+
+                onChange={(e) =>
+                  updateSetting(
+                    "reverseRooms",
+                    e.target.checked
+                  )
+                }
+              />
+
+            </label>
+
+          </section>
+
+          {/* INFRARED */}
+
+          <section
+            className=
+              "card settingsCard"
+          >
+
+            <Divider
+              label="Infrared"
+            />
+
+            <label
+              className="switchRow"
+            >
+
+              <div>
+
+                <strong>
+                  Enable infrared
+                  controls
+                </strong>
+
+                <div
+                  className=
+                    "settingsHelp"
+                >
+                  Hide the infrared
+                  controls when the
+                  cabin does not include
+                  infrared.
+                </div>
+
+              </div>
+
+              <input
+                type="checkbox"
+
+                checked={
+                  Boolean(
+                    settingsForm
+                      .infraredUI
+                  )
+                }
+
+                onChange={(e) =>
+                  updateSetting(
+                    "infraredUI",
                     e.target.checked
                   )
                 }
@@ -1425,7 +1503,7 @@ export default function App() {
                   className=
                     "settingsLabel"
                 >
-                  Sauna start
+                  Room 1 start
                 </label>
 
                 <input
@@ -1433,7 +1511,6 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
-
                   min="0"
 
                   value={
@@ -1459,7 +1536,7 @@ export default function App() {
                   className=
                     "settingsLabel"
                 >
-                  Sauna end
+                  Room 1 end
                 </label>
 
                 <input
@@ -1467,7 +1544,6 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
-
                   min="0"
 
                   value={
@@ -1493,7 +1569,7 @@ export default function App() {
                   className=
                     "settingsLabel"
                 >
-                  Steam start
+                  Room 2 start
                 </label>
 
                 <input
@@ -1501,7 +1577,6 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
-
                   min="0"
 
                   value={
@@ -1527,7 +1602,7 @@ export default function App() {
                   className=
                     "settingsLabel"
                 >
-                  Steam end
+                  Room 2 end
                 </label>
 
                 <input
@@ -1535,7 +1610,6 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
-
                   min="0"
 
                   value={
@@ -1730,8 +1804,7 @@ export default function App() {
 
             value={
               Number(
-                status.t ??
-                  120
+                status.t ?? 120
               )
             }
 
@@ -1740,8 +1813,7 @@ export default function App() {
                 "target",
                 Number(v),
                 {
-                  t:
-                    Number(v)
+                  t: Number(v)
                 }
               )
             }
@@ -1769,8 +1841,7 @@ export default function App() {
                 "timer",
                 Number(v),
                 {
-                  tm:
-                    Number(v),
+                  tm: Number(v),
 
                   on:
                     Number(v) > 0
@@ -1789,64 +1860,69 @@ export default function App() {
 
         </section>
 
-        {/* INFRARED */}
+        {/* INFRARED - CONDITIONAL */}
 
-        <section className="card">
+        {(status.infraredUI ===
+          undefined ||
+          boolFromStatus(
+            status.infraredUI
+          )) && (
 
-          <Divider
-            label="Infrared"
-          />
+          <section className="card">
 
-          <p className="summary">
+            <Divider
+              label="Infrared"
+            />
 
-            Infrared Timer:{" "}
+            <p className="summary">
 
-            <b>
-              {timerDisplay(
-                status.itm
-              )}
-            </b>
+              Infrared Timer:{" "}
 
-            m
+              <b>
+                {timerDisplay(
+                  status.itm
+                )}
+              </b>
 
-          </p>
+              m
 
-          <Slider
-            min="0"
-            max="120"
-            step="5"
+            </p>
 
-            value={
-              timerDisplay(
-                status.itm
-              )
-            }
+            <Slider
+              min="0"
+              max="120"
+              step="5"
 
-            onChange={(v) =>
-              cmd(
-                "irtime",
-                Number(v),
-                {
-                  itm:
-                    Number(v),
+              value={
+                timerDisplay(
+                  status.itm
+                )
+              }
 
-                  iron:
-                    Number(v) >
-                    0
-                }
-              )
-            }
+              onChange={(v) =>
+                cmd(
+                  "irtime",
+                  Number(v),
+                  {
+                    itm: Number(v),
 
-            ticks={[
-              "0",
-              "60",
-              "120"
-            ]}
+                    iron:
+                      Number(v) > 0
+                  }
+                )
+              }
 
-            accent="red"
-          />
+              ticks={[
+                "0",
+                "60",
+                "120"
+              ]}
 
-        </section>
+              accent="red"
+            />
+
+          </section>
+        )}
 
         {/* CHROMOTHERAPY */}
 
@@ -1861,8 +1937,9 @@ export default function App() {
               "roomSelector"
           >
 
-            {ROOMS.map(
+            {roomOptions().map(
               ([id, name]) => (
+
                 <button
                   key={id}
 
@@ -1910,6 +1987,7 @@ export default function App() {
                   name,
                   cls
                 ]) => (
+
                   <button
                     key={id}
 
@@ -1980,8 +2058,7 @@ export default function App() {
 
                 value={
                   Number(
-                    status.b ??
-                      150
+                    status.b ?? 150
                   )
                 }
 
@@ -2018,6 +2095,7 @@ export default function App() {
         {boolFromStatus(
           status.aromaUI
         ) && (
+
           <section
             className=
               "card aromaCard"
@@ -2034,13 +2112,13 @@ export default function App() {
 
               {[1, 2, 3, 4].map(
                 (id) => (
+
                   <button
                     key={id}
 
                     className={
                       Number(
-                        status.af ??
-                          1
+                        status.af ?? 1
                       ) === id
                         ? "fragranceBtn active"
                         : "fragranceBtn"
@@ -2151,29 +2229,16 @@ export default function App() {
                     : "aromaAction prime"
                 }
 
-                onPointerDown={(
-                  e
-                ) => {
+                onPointerDown={(e) => {
                   e.preventDefault();
-
                   startPrime();
                 }}
 
-                onPointerUp={
-                  stopPrime
-                }
+                onPointerUp={stopPrime}
+                onPointerCancel={stopPrime}
+                onPointerLeave={stopPrime}
 
-                onPointerCancel={
-                  stopPrime
-                }
-
-                onPointerLeave={
-                  stopPrime
-                }
-
-                onContextMenu={(
-                  e
-                ) =>
+                onContextMenu={(e) =>
                   e.preventDefault()
                 }
               >
@@ -2188,8 +2253,7 @@ export default function App() {
 
               <b>
                 {Number(
-                  status.ap ??
-                    60
+                  status.ap ?? 60
                 )}
               </b>
 
@@ -2204,20 +2268,16 @@ export default function App() {
 
               value={
                 Number(
-                  status.ap ??
-                    60
+                  status.ap ?? 60
                 )
               }
 
               onChange={(v) =>
                 cmd(
                   "aroma-period",
-
                   Number(v),
-
                   {
-                    ap:
-                      Number(v)
+                    ap: Number(v)
                   }
                 )
               }
@@ -2249,14 +2309,12 @@ export default function App() {
                   )
                   ? `Priming fragrance ${
                       Number(
-                        status.af ??
-                          1
+                        status.af ?? 1
                       )
                     }`
                   : `Dosing fragrance ${
                       Number(
-                        status.af ??
-                          1
+                        status.af ?? 1
                       )
                     }`
                 : "Pump stopped"}
@@ -2350,6 +2408,7 @@ function Slider({
 
         {ticks.map(
           (t) => (
+
             <div
               className="tick"
               key={t}
