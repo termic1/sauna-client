@@ -1228,6 +1228,26 @@ export default function App() {
                   onChange={e=>updateSetting(key,e.target.checked)}/></label>
             ))}
           </section>
+<div className="settingsHelp">
+  Firmware: {String(status.fw ?? "MISSING")}
+  <div>
+    Modern controller:
+    {isModernController(status) ? " YES" : " NO"}
+  </div>
+  <div>
+    Room 1: {String(status.name1 ?? "MISSING")}
+  </div>
+  <div>
+    Room 2: {String(status.name2 ?? "MISSING")}
+  </div>
+  <div>
+    LED types: {String(status.type1 ?? "MISSING")} /
+    {String(status.type2 ?? "MISSING")}
+  </div>
+  <div>
+    Shared RGB: {String(status.shareRGB ?? "MISSING")}
+  </div>
+</div>
           {isModernController(status) ? (
           <section className="card settingsCard">
             <Divider label="Room Configuration" />
