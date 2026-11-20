@@ -9,12 +9,15 @@ import {
   Html5QrcodeScanner
 } from "html5-qrcode";
 
+import "./App.css";
+
 const API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3001";
 
 function makeWsBase() {
-  const url = new URL(API_BASE);
+  const url =
+    new URL(API_BASE);
 
   url.protocol =
     url.protocol === "https:"
@@ -26,7 +29,8 @@ function makeWsBase() {
   return url.toString();
 }
 
-const WS_BASE = makeWsBase();
+const WS_BASE =
+  makeWsBase();
 
 const MODES = [
   [1, "FIRE", "orange"],
@@ -43,9 +47,42 @@ const MODES = [
   [12, "PARTY", "party"]
 ];
 
+const roomName = (n) => Number(n) === 2 ? "STEAM R" : "SAUNA";
+const roomChoices = (status) => {
+  const one = [1, roomName(status.name1 ?? (status.reverseRooms ? 2 : 1))];
+  if (Number(status.name2 ?? (status.reverseRooms ? 1 : 2)) === 0) return [one];
+  return [one, [2, roomName(status.name2 ?? (status.reverseRooms ? 1 : 2))], [3, "BOTH R"]];
+};
+const isModernController = (status) => {
+  if (!["name1","name2","type1","type2","shareRGB"].every(k => status?.[k] != null)) return false;
+  const match = String(status.fw || "").match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) return false;
+  const [major,minor,patch] = match.slice(1).map(Number);
+  return major > 2 || (major === 2 && (minor > 4 || (minor === 4 && patch >= 3)));
+};
+const ledTypeName = (type) => ({0:"Disabled",1:"WS2812 Color",2:"24V White PWM"})[Number(type)] ?? "Unknown";
+const settingsFromStatus = (st) => ({
+  newPassword: "", aromaUI: boolFromStatus(st.aromaUI),
+  reverseRooms: boolFromStatus(st.reverseRooms),
+  whiteMode: boolFromStatus(st.whiteMode), white2: boolFromStatus(st.white2),
+  infraredUI: st.infraredUI == null ? true : boolFromStatus(st.infraredUI),
+  reverseEncoder: boolFromStatus(st.reverseEncoder),
+  name1: Number(st.name1 ?? (st.reverseRooms ? 2 : 1)), name2: Number(st.name2 ?? (st.reverseRooms ? 1 : 2)),
+  type1: Number(st.type1 ?? (st.whiteMode ? 2 : 1)),
+  type2: Number(st.type2 ?? (st.white2 ? 2 : 1)),
+  shareRGB: Number(st.shareRGB ?? 1),
+  ledTotal: Number(st.ledTotal ?? 600), r1Start: Number(st.r1Start ?? 3),
+  r1End: Number(st.r1End ?? 272), r2Start: Number(st.r2Start ?? 300),
+  r2End: Number(st.r2End ?? 599), led2Total: Number(st.led2Total ?? 300),
+  led2Start: Number(st.led2Start ?? 0), led2End: Number(st.led2End ?? 299)
+});
+
 function cleanDeviceId(value) {
   return String(value || "")
-    .replace(/[^a-fA-F0-9]/g, "")
+    .replace(
+      /[^a-fA-F0-9]/g,
+      ""
+    )
     .toUpperCase();
 }
 
@@ -56,27 +93,38 @@ function cToF(c) {
     return "--";
   }
 
-  return (n * 1.8 + 32).toFixed(1);
+  return (
+    n * 1.8 + 32
+  ).toFixed(1);
 }
 
 function timerDisplay(value) {
   const n = Number(value);
 
-  if (!Number.isFinite(n) || n <= 0) {
+  if (
+    !Number.isFinite(n) ||
+    n <= 0
+  ) {
     return 0;
   }
 
   return Math.ceil(n);
 }
 
-function getDeviceIdFromText(text = "") {
-  const raw = String(text || "").trim();
+function getDeviceIdFromText(
+  text = ""
+) {
+  const raw =
+    String(text || "").trim();
 
   try {
-    const url = new URL(raw);
+    const url =
+      new URL(raw);
 
     return cleanDeviceId(
-      url.searchParams.get("device")
+      url.searchParams.get(
+        "device"
+      )
     );
   } catch {}
 
@@ -90,7 +138,9 @@ function getDeviceIdFromText(text = "") {
       params.get("device")
     );
 
-  if (fromUrl.length === 12) {
+  if (
+    fromUrl.length === 12
+  ) {
     return fromUrl;
   }
 
@@ -123,45 +173,56 @@ export default function App() {
           "saunaDeviceId"
         ) || "";
 
-  const [showQr, setShowQr] =
-    useState(false);
+  const [
+    showQr,
+    setShowQr
+  ] = useState(false);
 
-  const [deviceId, setDeviceId] =
-    useState(initialDeviceId);
+  const [
+    deviceId,
+    setDeviceId
+  ] = useState(
+    initialDeviceId
+  );
 
-  const [entryId, setEntryId] =
-    useState(initialDeviceId);
+  const [
+    entryId,
+    setEntryId
+  ] = useState(
+    initialDeviceId
+  );
 
-  const [status, setStatus] =
-    useState({
-      t: 120,
-      tm: 0,
-      itm: 0,
-      b: 150,
-      mode: 1,
-      lon: true,
-      rm: 3,
+  const [
+    status,
+    setStatus
+  ] = useState({
+    t: 120,
+    tm: 0,
+    itm: 0,
+    b: 150,
+    mode: 1,
+    lon: true,
+    rm: 3,
 
-      // Aromatherapy
-      af: 1,
-      aen: false,
-      ap: 60,
-      steam: false,
-      apump: false,
-      amanual: false,
-      aromaUI: false,
+    // Aromatherapy
+    af: 1,
+    aen: false,
+    ap: 60,
+    steam: false,
+    apump: false,
+    amanual: false,
+    aromaUI: false,
 
-      // NEW SETTINGS
-      reverseRooms: false,
-      infraredUI: true,
-
-      // LED installation
-      ledTotal: 600,
-      r1Start: 3,
-      r1End: 272,
-      r2Start: 300,
-      r2End: 599
-    });
+    // LED installation
+    ledTotal: 600,
+    r1Start: 3,
+    r1End: 272,
+    r2Start: 300,
+    r2End: 599,
+    name1: 1, name2: 2, type1: 1, type2: 1, shareRGB: 1,
+    led2Total: 300, led2Start: 0, led2End: 299,
+    rb1: 150, rb2: 150, ron1: true, ron2: true
+  });
 
   const [
     backendOnline,
@@ -173,11 +234,15 @@ export default function App() {
     setWsOnline
   ] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError
+  ] = useState("");
 
-  const [view, setView] =
-    useState("main");
+  const [
+    view,
+    setView
+  ] = useState("main");
 
   const [
     settingsPassword,
@@ -194,25 +259,10 @@ export default function App() {
     setSettingsSaving
   ] = useState(false);
 
-  const [
-    settingsForm,
-    setSettingsForm
-  ] = useState({
-    newPassword: "",
-    aromaUI: false,
+  const [settingsForm, setSettingsForm] = useState(() => settingsFromStatus({}));
 
-    // NEW SETTINGS
-    reverseRooms: false,
-    infraredUI: true,
-
-    ledTotal: 600,
-    r1Start: 3,
-    r1End: 272,
-    r2Start: 300,
-    r2End: 599
-  });
-
-  const wsRef = useRef(null);
+  const wsRef =
+    useRef(null);
 
   const primeActiveRef =
     useRef(false);
@@ -220,14 +270,20 @@ export default function App() {
   const connectedText =
     useMemo(() => {
       if (!backendOnline) {
-        return "BACKEND OFFLINE";
+        return (
+          "BACKEND OFFLINE"
+        );
       }
 
       if (!wsOnline) {
-        return "WAITING FOR LIVE STATUS";
+        return (
+          "WAITING FOR LIVE STATUS"
+        );
       }
 
-      return "REMOTE MQTT LINK ACTIVE";
+      return (
+        "REMOTE MQTT LINK ACTIVE"
+      );
     }, [
       backendOnline,
       wsOnline
@@ -257,14 +313,18 @@ export default function App() {
     fetch(
       `${API_BASE}/api/health`
     )
-      .then((r) => r.json())
+      .then((r) =>
+        r.json()
+      )
       .then((d) =>
         setBackendOnline(
           Boolean(d.ok)
         )
       )
       .catch(() =>
-        setBackendOnline(false)
+        setBackendOnline(
+          false
+        )
       );
   }, []);
 
@@ -294,7 +354,9 @@ export default function App() {
             decodedText
           );
 
-        if (cleaned.length === 12) {
+        if (
+          cleaned.length === 12
+        ) {
           setEntryId(cleaned);
 
           localStorage.setItem(
@@ -302,7 +364,10 @@ export default function App() {
             cleaned
           );
 
-          setDeviceId(cleaned);
+          setDeviceId(
+            cleaned
+          );
+
           setShowQr(false);
 
           scanner.clear();
@@ -337,7 +402,9 @@ export default function App() {
     fetch(
       `${API_BASE}/api/device/${deviceId}/status`
     )
-      .then((r) => r.json())
+      .then((r) =>
+        r.json()
+      )
       .then((d) => {
         if (d) {
           setStatus(
@@ -368,7 +435,9 @@ export default function App() {
 
         ws.send(
           JSON.stringify({
-            type: "subscribe",
+            type:
+              "subscribe",
+
             deviceId
           })
         );
@@ -383,7 +452,8 @@ export default function App() {
               );
 
             if (
-              msg.type === "status"
+              msg.type ===
+              "status"
             ) {
               setStatus(
                 (prev) => ({
@@ -394,9 +464,12 @@ export default function App() {
             }
 
             if (
-              msg.type === "error"
+              msg.type ===
+              "error"
             ) {
-              setError(msg.error);
+              setError(
+                msg.error
+              );
             }
           } catch {}
         };
@@ -421,6 +494,7 @@ export default function App() {
 
     return () => {
       stopped = true;
+
       wsRef.current?.close();
     };
   }, [deviceId]);
@@ -440,23 +514,31 @@ export default function App() {
 
             if (
               next.on &&
-              Number(next.tm) > 0
+              Number(
+                next.tm
+              ) > 0
             ) {
               next.tm =
                 Math.max(
                   0,
-                  Number(next.tm) -
+                  Number(
+                    next.tm
+                  ) -
                     1 / 60
                 );
             }
 
             if (
-              Number(next.itm) > 0
+              Number(
+                next.itm
+              ) > 0
             ) {
               next.itm =
                 Math.max(
                   0,
-                  Number(next.itm) -
+                  Number(
+                    next.itm
+                  ) -
                     1 / 60
                 );
 
@@ -470,7 +552,9 @@ export default function App() {
       }, 1000);
 
     return () =>
-      clearInterval(interval);
+      clearInterval(
+        interval
+      );
   }, []);
 
   // =========================================================
@@ -479,9 +563,13 @@ export default function App() {
 
   function saveDeviceId() {
     const cleaned =
-      cleanDeviceId(entryId);
+      cleanDeviceId(
+        entryId
+      );
 
-    if (cleaned.length !== 12) {
+    if (
+      cleaned.length !== 12
+    ) {
       setError(
         "Device ID must be 12 hex characters, like A0B76314F23C."
       );
@@ -511,32 +599,9 @@ export default function App() {
 
     setSettingsPassword("");
 
-    setStatus({
-      t: 120,
-      tm: 0,
-      itm: 0,
-      b: 150,
-      mode: 1,
-      lon: true,
-      rm: 3,
-
-      af: 1,
-      aen: false,
-      ap: 60,
-      steam: false,
-      apump: false,
-      amanual: false,
-      aromaUI: false,
-
-      reverseRooms: false,
-      infraredUI: true,
-
-      ledTotal: 600,
-      r1Start: 3,
-      r1End: 272,
-      r2Start: 300,
-      r2End: 599
-    });
+    setStatus({t:120,tm:0,itm:0,b:150,mode:1,lon:false,rm:1,
+      af:1,aen:false,ap:60,steam:false,apump:false,amanual:false,aromaUI:false,
+      ...settingsFromStatus({})});
   }
 
   // =========================================================
@@ -604,54 +669,26 @@ export default function App() {
   // =========================================================
 
   function selectedRoom() {
-    const rm =
-      Number(status.rm ?? 3);
-
-    return (
-      rm >= 1 &&
-      rm <= 3
-    )
-      ? rm
-      : 3;
+    const rm = Number(status.rm ?? 1);
+    const options = roomChoices(status);
+    return options.some(([id]) => id === rm) ? rm : 1;
   }
-
-  // IMPORTANT:
-  // Physical Room 1 and Room 2 do NOT change.
-  // Only their displayed names change.
-
-  function roomOptions() {
-    const reversed =
-      boolFromStatus(
-        status.reverseRooms
-      );
-
-    return [
-      [
-        1,
-        reversed
-          ? "STEAM R"
-          : "SAUNA"
-      ],
-      [
-        2,
-        reversed
-          ? "SAUNA"
-          : "STEAM R"
-      ],
-      [3, "BOTH R"]
-    ];
-  }
-
   function roomLabel() {
-    const rm = selectedRoom();
-
-    return (
-      roomOptions().find(
-        ([id]) => id === rm
-      )?.[1] ||
-      "BOTH R"
-    );
+    return roomChoices(status).find(([id]) => id === selectedRoom())?.[1] || "SAUNA";
   }
+  const legacyWhite = boolFromStatus(status.whiteMode);
+  const roomTypes = !isModernController(status)
+    ? [legacyWhite ? 2 : 1]
+    : selectedRoom() === 3
+      ? [Number(status.type1 ?? 1), Number(status.type2 ?? 1)]
+      : [Number(selectedRoom() === 2 ? status.type2 ?? 1 : status.type1 ?? 1)];
+  const showColor = roomTypes.includes(1);
+  const showWhite = roomTypes.includes(2);
+  const selectedBrightness = selectedRoom() === 2 ? Number(status.rb2 ?? status.b ?? 150)
+    : Number(status.rb1 ?? status.b ?? 150);
+  const selectedLightOn = selectedRoom() === 2 ? boolFromStatus(status.ron2 ?? status.lon)
+    : selectedRoom() === 1 ? boolFromStatus(status.ron1 ?? status.lon)
+    : boolFromStatus(status.ron1 ?? status.lon) && boolFromStatus(status.ron2 ?? status.lon);
 
   // =========================================================
   // PRIME
@@ -664,7 +701,8 @@ export default function App() {
       return;
     }
 
-    primeActiveRef.current = true;
+    primeActiveRef.current =
+      true;
 
     setStatus(
       (prev) => ({
@@ -687,7 +725,8 @@ export default function App() {
       return;
     }
 
-    primeActiveRef.current = false;
+    primeActiveRef.current =
+      false;
 
     setStatus(
       (prev) => ({
@@ -707,6 +746,9 @@ export default function App() {
 
   // =========================================================
   // OPEN SETTINGS
+  //
+  // Password is now verified by the ESP32 BEFORE the
+  // settings page opens.
   // =========================================================
 
   async function openSettings() {
@@ -716,7 +758,9 @@ export default function App() {
         "Enter settings password:"
       );
 
-    if (password === null) {
+    if (
+      password === null
+    ) {
       return;
     }
 
@@ -738,7 +782,8 @@ export default function App() {
         await fetch(
           `${API_BASE}/api/device/${deviceId}/settings/verify`,
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
@@ -763,65 +808,21 @@ export default function App() {
         );
       }
 
+      // Password was verified by ESP32.
+
       setSettingsPassword(
         cleanPassword
       );
 
-      setSettingsForm({
-        newPassword: "",
+      setSettingsForm(settingsFromStatus(status));
 
-        aromaUI:
-          boolFromStatus(
-            status.aromaUI
-          ),
+      setSettingsMessage(
+        ""
+      );
 
-        reverseRooms:
-          boolFromStatus(
-            status.reverseRooms
-          ),
-
-        infraredUI:
-          status.infraredUI ===
-          undefined
-            ? true
-            : boolFromStatus(
-                status.infraredUI
-              ),
-
-        ledTotal:
-          Number(
-            status.ledTotal ??
-              600
-          ),
-
-        r1Start:
-          Number(
-            status.r1Start ??
-              3
-          ),
-
-        r1End:
-          Number(
-            status.r1End ??
-              272
-          ),
-
-        r2Start:
-          Number(
-            status.r2Start ??
-              300
-          ),
-
-        r2End:
-          Number(
-            status.r2End ??
-              599
-          )
-      });
-
-      setSettingsMessage("");
-      setView("settings");
-
+      setView(
+        "settings"
+      );
     } catch (e) {
       setError(
         e.message ||
@@ -843,83 +844,19 @@ export default function App() {
   }
 
   function validateSettingsForm() {
-
-    const ledTotal =
-      Number(
-        settingsForm.ledTotal
-      );
-
-    const r1Start =
-      Number(
-        settingsForm.r1Start
-      );
-
-    const r1End =
-      Number(
-        settingsForm.r1End
-      );
-
-    const r2Start =
-      Number(
-        settingsForm.r2Start
-      );
-
-    const r2End =
-      Number(
-        settingsForm.r2End
-      );
-
-    if (
-      !Number.isInteger(
-        ledTotal
-      ) ||
-      !Number.isInteger(
-        r1Start
-      ) ||
-      !Number.isInteger(
-        r1End
-      ) ||
-      !Number.isInteger(
-        r2Start
-      ) ||
-      !Number.isInteger(
-        r2End
-      )
-    ) {
-      return (
-        "LED settings must be whole numbers."
-      );
-    }
-
-    if (
-      ledTotal < 1 ||
-      ledTotal > 5000
-    ) {
-      return (
-        "Total LEDs must be between 1 and 5000."
-      );
-    }
-
-    if (
-      r1Start < 0 ||
-      r1End < r1Start ||
-      r1End >= ledTotal
-    ) {
-      return (
-        "Invalid Sauna LED range."
-      );
-    }
-
-    if (
-      r2Start < 0 ||
-      r2End < r2Start ||
-      r2End >= ledTotal
-    ) {
-      return (
-        "Invalid Steam LED range."
-      );
-    }
-
+    const f = settingsForm;
+    const modern = isModernController(status);
+    const n = (v) => Number(v);
+    const validRange = (total,a,b) => Number.isInteger(n(total)) && n(total)>=1 && n(total)<=5000 &&
+      Number.isInteger(n(a)) && Number.isInteger(n(b)) && n(a)>=0 && n(b)>=n(a) && n(b)<n(total);
+    if (modern && ![1,2].includes(n(f.name1)) || ![0,1,2].includes(n(f.name2))) return "Invalid room names.";
+    if (modern && ![1,2].includes(n(f.type1)) || ![0,1,2].includes(n(f.type2))) return "Invalid LED type.";
+    if (modern && (n(f.name2)===0)!==(n(f.type2)===0)) return "A disabled room must have disabled LEDs.";
+    if (!validRange(f.ledTotal,f.r1Start,f.r1End) || !validRange(f.ledTotal,f.r2Start,f.r2End))
+      return "Invalid GPIO47 LED ranges (0 to total minus 1).";
+    if (modern && n(f.type2)===1 && !(n(f.type1)===1 && n(f.shareRGB)===1) &&
+        !validRange(f.led2Total,f.led2Start,f.led2End))
+      return "Invalid GPIO42 LED range.";
     return "";
   }
 
@@ -932,7 +869,9 @@ export default function App() {
     const validationError =
       validateSettingsForm();
 
-    if (validationError) {
+    if (
+      validationError
+    ) {
       setSettingsMessage(
         validationError
       );
@@ -944,57 +883,22 @@ export default function App() {
     setSettingsMessage("");
 
     const payload = {
-      password:
-        settingsPassword,
-
-      newPassword:
-        settingsForm
-          .newPassword
-          .trim(),
-
-      aromaUI:
-        Boolean(
-          settingsForm.aromaUI
-        ),
-
-      // NEW
-      reverseRooms:
-        Boolean(
-          settingsForm
-            .reverseRooms
-        ),
-
-      // NEW
-      infraredUI:
-        Boolean(
-          settingsForm
-            .infraredUI
-        ),
-
-      ledTotal:
-        Number(
-          settingsForm.ledTotal
-        ),
-
-      r1Start:
-        Number(
-          settingsForm.r1Start
-        ),
-
-      r1End:
-        Number(
-          settingsForm.r1End
-        ),
-
-      r2Start:
-        Number(
-          settingsForm.r2Start
-        ),
-
-      r2End:
-        Number(
-          settingsForm.r2End
-        )
+      password: settingsPassword,
+      controllerGeneration: isModernController(status) ? "modern" : "legacy",
+      reverseRooms: Boolean(settingsForm.reverseRooms),
+      whiteMode: Boolean(settingsForm.whiteMode),
+      white2: Boolean(settingsForm.white2),
+      newPassword: settingsForm.newPassword.trim(),
+      aromaUI: Boolean(settingsForm.aromaUI),
+      infraredUI: Boolean(settingsForm.infraredUI),
+      reverseEncoder: Boolean(settingsForm.reverseEncoder),
+      name1: Number(settingsForm.name1), name2: Number(settingsForm.name2),
+      type1: Number(settingsForm.type1), type2: Number(settingsForm.name2) === 0 ? 0 : Number(settingsForm.type2),
+      shareRGB: Number(settingsForm.type1) === 1 && Number(settingsForm.type2) === 1 ? Number(settingsForm.shareRGB) : 0,
+      ledTotal: Number(settingsForm.ledTotal), r1Start: Number(settingsForm.r1Start),
+      r1End: Number(settingsForm.r1End), r2Start: Number(settingsForm.r2Start),
+      r2End: Number(settingsForm.r2End), led2Total: Number(settingsForm.led2Total),
+      led2Start: Number(settingsForm.led2Start), led2End: Number(settingsForm.led2End)
     };
 
     try {
@@ -1002,7 +906,8 @@ export default function App() {
         await fetch(
           `${API_BASE}/api/device/${deviceId}/settings`,
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "Content-Type":
@@ -1026,35 +931,8 @@ export default function App() {
         );
       }
 
-      setStatus(
-        (prev) => ({
-          ...prev,
-
-          aromaUI:
-            payload.aromaUI,
-
-          reverseRooms:
-            payload.reverseRooms,
-
-          infraredUI:
-            payload.infraredUI,
-
-          ledTotal:
-            payload.ledTotal,
-
-          r1Start:
-            payload.r1Start,
-
-          r1End:
-            payload.r1End,
-
-          r2Start:
-            payload.r2Start,
-
-          r2End:
-            payload.r2End
-        })
-      );
+      // The ESP32 confirms the applied configuration in its next MQTT status.
+      // Do not show unconfirmed installation settings as saved.
 
       if (
         payload.newPassword
@@ -1074,16 +952,15 @@ export default function App() {
       setSettingsMessage(
         "Settings sent to controller."
       );
-
     } catch (e) {
-
       setSettingsMessage(
         e.message ||
           "Unable to save settings"
       );
-
     } finally {
-      setSettingsSaving(false);
+      setSettingsSaving(
+        false
+      );
     }
   }
 
@@ -1185,7 +1062,9 @@ export default function App() {
   // SETTINGS PAGE
   // =========================================================
 
-  if (view === "settings") {
+  if (
+    view === "settings"
+  ) {
     return (
       <div className="page">
 
@@ -1210,7 +1089,10 @@ export default function App() {
 
               onClick={() => {
                 setView("main");
-                setSettingsMessage("");
+
+                setSettingsMessage(
+                  ""
+                );
               }}
             >
               Back
@@ -1293,7 +1175,8 @@ export default function App() {
             />
 
             <label
-              className="switchRow"
+              className=
+                "switchRow"
             >
 
               <div>
@@ -1337,118 +1220,65 @@ export default function App() {
 
           </section>
 
-          {/* ROOM NAMES */}
-
-          <section
-            className=
-              "card settingsCard"
-          >
-
-            <Divider
-              label="Rooms"
-            />
-
-            <label
-              className="switchRow"
-            >
-
-              <div>
-
-                <strong>
-                  Reverse Sauna / Steam
-                  room names
-                </strong>
-
-                <div
-                  className=
-                    "settingsHelp"
-                >
-                  Only changes the
-                  displayed names.
-                  Physical Room 1 and
-                  Room 2 wiring remain
-                  unchanged.
-                </div>
-
-              </div>
-
-              <input
-                type="checkbox"
-
-                checked={
-                  Boolean(
-                    settingsForm
-                      .reverseRooms
-                  )
-                }
-
-                onChange={(e) =>
-                  updateSetting(
-                    "reverseRooms",
-                    e.target.checked
-                  )
-                }
-              />
-
-            </label>
-
+          <section className="card settingsCard">
+            <Divider label="Controller Options" />
+            {[["infraredUI","Show infrared controls"],["reverseEncoder","Reverse encoder direction"]].map(([key,label]) => (
+              <label className="switchRow" key={key}><strong>{label}</strong>
+                <input type="checkbox" checked={Boolean(settingsForm[key])}
+                  onChange={e=>updateSetting(key,e.target.checked)}/></label>
+            ))}
+          </section>
+          {isModernController(status) ? (
+          <section className="card settingsCard">
+            <Divider label="Room Configuration" />
+            <label className="settingsLabel">Room 1 name (GPIO47)</label>
+            <select className="settingsInput" value={settingsForm.name1} onChange={e=>updateSetting("name1",Number(e.target.value))}>
+              <option value={1}>Sauna</option><option value={2}>Steam Room</option>
+            </select>
+            <label className="settingsLabel">Room 1 LEDs</label>
+            <select className="settingsInput" value={settingsForm.type1} onChange={e=>updateSetting("type1",Number(e.target.value))}>
+              <option value={1}>WS2812 Color</option><option value={2}>24V White (PWM)</option>
+            </select>
+            <label className="settingsLabel">Room 2 name (GPIO42)</label>
+            <select className="settingsInput" value={settingsForm.name2} onChange={e=>{
+              const value=Number(e.target.value);setSettingsForm(p=>({...p,name2:value,type2:value===0?0:(p.type2===0?1:p.type2)}));
+            }}><option value={0}>Disabled</option><option value={1}>Sauna</option><option value={2}>Steam Room</option></select>
+            <label className="settingsLabel">Room 2 LEDs</label>
+            <select className="settingsInput" disabled={Number(settingsForm.name2)===0} value={settingsForm.name2===0?0:settingsForm.type2}
+              onChange={e=>updateSetting("type2",Number(e.target.value))}>
+              <option value={0}>Disabled</option><option value={1}>WS2812 Color</option><option value={2}>24V White (PWM)</option>
+            </select>
+            {Number(settingsForm.type1)===1 && Number(settingsForm.type2)===1 && Number(settingsForm.name2)!==0 && <>
+              <label className="settingsLabel">WS2812 wiring</label>
+              <select className="settingsInput" value={settingsForm.shareRGB} onChange={e=>updateSetting("shareRGB",Number(e.target.value))}>
+                <option value={1}>One shared strand on GPIO47</option><option value={0}>Independent strands on GPIO47 and GPIO42</option>
+              </select>
+            </>}
+            {Number(settingsForm.type2)===1 && !(Number(settingsForm.type1)===1 && Number(settingsForm.shareRGB)===1) && <>
+              <Divider label="GPIO42 Color Strand" />
+              {[["led2Total","Total physical LEDs"],["led2Start","Useful first LED"],["led2End","Useful last LED"]].map(([key,label])=>(
+                <label key={key} className="settingsLabel">{label}
+                  <input className="settingsInput" type="number" min="0" max="5000" value={settingsForm[key]}
+                    onChange={e=>updateSetting(key,Number(e.target.value))}/></label>
+              ))}
+            </>}
           </section>
 
-          {/* INFRARED */}
-
-          <section
-            className=
-              "card settingsCard"
-          >
-
-            <Divider
-              label="Infrared"
-            />
-
-            <label
-              className="switchRow"
-            >
-
-              <div>
-
-                <strong>
-                  Enable infrared
-                  controls
-                </strong>
-
-                <div
-                  className=
-                    "settingsHelp"
-                >
-                  Hide the infrared
-                  controls when the
-                  cabin does not include
-                  infrared.
-                </div>
-
-              </div>
-
-              <input
-                type="checkbox"
-
-                checked={
-                  Boolean(
-                    settingsForm
-                      .infraredUI
-                  )
-                }
-
-                onChange={(e) =>
-                  updateSetting(
-                    "infraredUI",
-                    e.target.checked
-                  )
-                }
-              />
-
-            </label>
-
-          </section>
+          ) : (
+            <section className="card settingsCard">
+              <Divider label="Legacy Room Configuration" />
+              <div className="settingsHelp">This controller uses the original shared WS2812 strand configuration. Its new multi-light settings are not available without a firmware update.</div>
+              <label className="switchRow"><strong>Reverse Sauna / Steam room names</strong>
+                <input type="checkbox" checked={Boolean(settingsForm.reverseRooms)}
+                  onChange={e=>updateSetting("reverseRooms",e.target.checked)} /></label>
+              {status.whiteMode !== undefined && <label className="switchRow"><strong>White LED mode (legacy)</strong>
+                <input type="checkbox" checked={Boolean(settingsForm.whiteMode)}
+                  onChange={e=>updateSetting("whiteMode",e.target.checked)} /></label>}
+              {status.white2 !== undefined && <label className="switchRow"><strong>Second white LED output (legacy)</strong>
+                <input type="checkbox" checked={Boolean(settingsForm.white2)}
+                  onChange={e=>updateSetting("white2",e.target.checked)} /></label>}
+            </section>
+          )}
 
           {/* LED SETTINGS */}
 
@@ -1458,7 +1288,7 @@ export default function App() {
           >
 
             <Divider
-              label="LED Installation"
+              label="GPIO47 / Shared Strand LED Ranges"
             />
 
             <label
@@ -1511,6 +1341,7 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
+
                   min="0"
 
                   value={
@@ -1544,6 +1375,7 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
+
                   min="0"
 
                   value={
@@ -1577,6 +1409,7 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
+
                   min="0"
 
                   value={
@@ -1610,6 +1443,7 @@ export default function App() {
                     "settingsInput"
 
                   type="number"
+
                   min="0"
 
                   value={
@@ -1804,7 +1638,8 @@ export default function App() {
 
             value={
               Number(
-                status.t ?? 120
+                status.t ??
+                  120
               )
             }
 
@@ -1813,7 +1648,8 @@ export default function App() {
                 "target",
                 Number(v),
                 {
-                  t: Number(v)
+                  t:
+                    Number(v)
                 }
               )
             }
@@ -1841,7 +1677,8 @@ export default function App() {
                 "timer",
                 Number(v),
                 {
-                  tm: Number(v),
+                  tm:
+                    Number(v),
 
                   on:
                     Number(v) > 0
@@ -1860,69 +1697,64 @@ export default function App() {
 
         </section>
 
-        {/* INFRARED - CONDITIONAL */}
+        {/* INFRARED */}
 
-        {(status.infraredUI ===
-          undefined ||
-          boolFromStatus(
-            status.infraredUI
-          )) && (
+        {(status.infraredUI == null || boolFromStatus(status.infraredUI)) && <section className="card">
 
-          <section className="card">
+          <Divider
+            label="Infrared"
+          />
 
-            <Divider
-              label="Infrared"
-            />
+          <p className="summary">
 
-            <p className="summary">
+            Infrared Timer:{" "}
 
-              Infrared Timer:{" "}
+            <b>
+              {timerDisplay(
+                status.itm
+              )}
+            </b>
 
-              <b>
-                {timerDisplay(
-                  status.itm
-                )}
-              </b>
+            m
 
-              m
+          </p>
 
-            </p>
+          <Slider
+            min="0"
+            max="120"
+            step="5"
 
-            <Slider
-              min="0"
-              max="120"
-              step="5"
+            value={
+              timerDisplay(
+                status.itm
+              )
+            }
 
-              value={
-                timerDisplay(
-                  status.itm
-                )
-              }
+            onChange={(v) =>
+              cmd(
+                "irtime",
+                Number(v),
+                {
+                  itm:
+                    Number(v),
 
-              onChange={(v) =>
-                cmd(
-                  "irtime",
-                  Number(v),
-                  {
-                    itm: Number(v),
+                  iron:
+                    Number(v) >
+                    0
+                }
+              )
+            }
 
-                    iron:
-                      Number(v) > 0
-                  }
-                )
-              }
+            ticks={[
+              "0",
+              "60",
+              "120"
+            ]}
 
-              ticks={[
-                "0",
-                "60",
-                "120"
-              ]}
+            accent="red"
+          />
 
-              accent="red"
-            />
-
-          </section>
-        )}
+        </section>}
 
         {/* CHROMOTHERAPY */}
 
@@ -1937,9 +1769,8 @@ export default function App() {
               "roomSelector"
           >
 
-            {roomOptions().map(
+            {roomChoices(status).map(
               ([id, name]) => (
-
                 <button
                   key={id}
 
@@ -1978,114 +1809,27 @@ export default function App() {
           </p>
 
           <div className="lightArea">
-
-            <div className="modeGrid">
-
-              {MODES.map(
-                ([
-                  id,
-                  name,
-                  cls
-                ]) => (
-
-                  <button
-                    key={id}
-
-                    className={
-                      `mode ${cls} ${
-                        Number(
-                          status.mode
-                        ) === id &&
-                        status.lon
-                          ? "active"
-                          : ""
-                      }`
-                    }
-
-                    onClick={() =>
-                      cmd(
-                        "mode",
-                        id,
-                        {
-                          mode: id,
-                          lon: true
-                        }
-                      )
-                    }
-                  >
-                    {name}
-                  </button>
-                )
-              )}
-
-              <button
-                className={
-                  status.lon
-                    ? "ledToggle active"
-                    : "ledToggle"
-                }
-
-                onClick={() =>
-                  cmd(
-                    "leds",
-
-                    status.lon
-                      ? "off"
-                      : "on",
-
-                    {
-                      lon:
-                        !status.lon
-                    }
-                  )
-                }
-              >
-                LED ON/OFF
-              </button>
-
-            </div>
-
-            <div className="brightness">
-
-              <div>
-                BRIGHT
+            <p className="summary">{roomTypes.map(ledTypeName).join(" / ")}</p>
+            {showColor && <div className="modeGrid">
+              {MODES.map(([id,name,cls]) => <button key={id}
+                className={`mode ${cls} ${Number(status.mode)===id && selectedLightOn ? "active":""}`}
+                onClick={()=>cmd("mode",id,{mode:id,lon:true})}>{name}</button>)}
+            </div>}
+            {(showColor || showWhite) && <>
+              <button className={selectedLightOn ? "ledToggle active" : "ledToggle"}
+                onClick={()=>cmd("leds",selectedLightOn?"off":"on",{
+                  lon:!selectedLightOn,
+                  ...(selectedRoom()===1?{ron1:!selectedLightOn}:selectedRoom()===2?{ron2:!selectedLightOn}:{ron1:!selectedLightOn,ron2:!selectedLightOn})
+                })}>LED {selectedLightOn?"ON — TURN OFF":"OFF — TURN ON"}</button>
+              <div className="brightness"><div>BRIGHT</div>
+                <input type="range" min="0" max="255" value={selectedBrightness}
+                  onChange={e=>{const v=Number(e.target.value);cmd("bright",v,{
+                    b:v,...(selectedRoom()===1?{rb1:v}:selectedRoom()===2?{rb2:v}:{rb1:v,rb2:v})
+                  });}} />
+                <div>DIM</div>
               </div>
-
-              <input
-                type="range"
-                min="10"
-                max="255"
-
-                value={
-                  Number(
-                    status.b ?? 150
-                  )
-                }
-
-                onChange={(e) =>
-                  cmd(
-                    "bright",
-
-                    Number(
-                      e.target.value
-                    ),
-
-                    {
-                      b:
-                        Number(
-                          e.target.value
-                        )
-                    }
-                  )
-                }
-              />
-
-              <div>
-                DIM
-              </div>
-
-            </div>
-
+            </>}
+            {!showColor && !showWhite && <p className="summary">Lighting is disabled for this room.</p>}
           </div>
 
         </section>
@@ -2095,7 +1839,6 @@ export default function App() {
         {boolFromStatus(
           status.aromaUI
         ) && (
-
           <section
             className=
               "card aromaCard"
@@ -2112,13 +1855,13 @@ export default function App() {
 
               {[1, 2, 3, 4].map(
                 (id) => (
-
                   <button
                     key={id}
 
                     className={
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       ) === id
                         ? "fragranceBtn active"
                         : "fragranceBtn"
@@ -2229,16 +1972,29 @@ export default function App() {
                     : "aromaAction prime"
                 }
 
-                onPointerDown={(e) => {
+                onPointerDown={(
+                  e
+                ) => {
                   e.preventDefault();
+
                   startPrime();
                 }}
 
-                onPointerUp={stopPrime}
-                onPointerCancel={stopPrime}
-                onPointerLeave={stopPrime}
+                onPointerUp={
+                  stopPrime
+                }
 
-                onContextMenu={(e) =>
+                onPointerCancel={
+                  stopPrime
+                }
+
+                onPointerLeave={
+                  stopPrime
+                }
+
+                onContextMenu={(
+                  e
+                ) =>
                   e.preventDefault()
                 }
               >
@@ -2253,7 +2009,8 @@ export default function App() {
 
               <b>
                 {Number(
-                  status.ap ?? 60
+                  status.ap ??
+                    60
                 )}
               </b>
 
@@ -2268,16 +2025,20 @@ export default function App() {
 
               value={
                 Number(
-                  status.ap ?? 60
+                  status.ap ??
+                    60
                 )
               }
 
               onChange={(v) =>
                 cmd(
                   "aroma-period",
+
                   Number(v),
+
                   {
-                    ap: Number(v)
+                    ap:
+                      Number(v)
                   }
                 )
               }
@@ -2309,12 +2070,14 @@ export default function App() {
                   )
                   ? `Priming fragrance ${
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       )
                     }`
                   : `Dosing fragrance ${
                       Number(
-                        status.af ?? 1
+                        status.af ??
+                          1
                       )
                     }`
                 : "Pump stopped"}
@@ -2408,7 +2171,6 @@ function Slider({
 
         {ticks.map(
           (t) => (
-
             <div
               className="tick"
               key={t}
