@@ -58,7 +58,7 @@ const isModernController = (status) => {
   const match = String(status.fw || "").match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!match) return false;
   const [major,minor,patch] = match.slice(1).map(Number);
-  return major > 2 || (major === 2 && (minor > 4 || (minor === 4 && patch >= 3)));
+  return major > 2 || (major === 2 && (minor > 4 || (minor === 4 && patch >= 1)));
 };
 const ledTypeName = (type) => ({0:"Disabled",1:"WS2812 Color",2:"24V White PWM"})[Number(type)] ?? "Unknown";
 const settingsFromStatus = (st) => ({
